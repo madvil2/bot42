@@ -55,7 +55,9 @@ defmodule Bot42.MixProject do
       {:plug, "~> 1.15"},
       {:remote_ip, "~> 1.1"},
       {:multipart, "~> 0.4.0"},
-      {:telegex, "~> 1.3.2"}
+      {:telegex, "~> 1.3.2"},
+      {:httpoison, "~> 2.2.1"},
+      {:icalendar, "~> 1.1.2"}
     ]
   end
 
