@@ -52,7 +52,6 @@ defmodule Bot42.MixProject do
       {:jason, "~> 1.2"},
       {:dns_cluster, "~> 0.1.1"},
       {:plug_cowboy, "~> 2.5"},
-      {:cors_plug, "~> 3.0"},
       {:plug, "~> 1.15"},
       {:remote_ip, "~> 1.1"},
       {:multipart, "~> 0.4.0"},

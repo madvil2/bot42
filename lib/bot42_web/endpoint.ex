@@ -39,8 +39,6 @@ defmodule Bot42Web.Endpoint do
   plug Plug.RequestId
   plug Plug.Telemetry, event_prefix: [:phoenix, :endpoint]
 
-  plug CORSPlug, origin: &Bot42.cors_origin/0
-
   plug Plug.Parsers,
     parsers: [:urlencoded, :multipart, :json],
     pass: ["*/*"],
