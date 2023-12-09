@@ -24,19 +24,6 @@ defmodule Bot42Web.UserSettingsLive do
             label="Telegram Username"
             value={@current_tg_username}
           />
-          <.input
-            field={@update_user_form[:tududutu_message]}
-            type="textarea"
-            label="Tududutu Message"
-            value={@current_tududutu_message}
-          />
-          <.input
-            field={@update_user_form[:social_status]}
-            type="text"
-            label="Social Status"
-            value={@current_social_status}
-          />
-
           <:actions>
             <.button phx-disable-with="Changing...">Change User Settings</.button>
           </:actions>
@@ -129,8 +116,6 @@ defmodule Bot42Web.UserSettingsLive do
       |> assign(:email_form_current_password, nil)
       |> assign(:current_email, user.email)
       |> assign(:current_tg_username, user.tg_username)
-      |> assign(:current_tududutu_message, user.tududutu_message)
-      |> assign(:current_social_status, user.social_status)
       |> assign(:email_form, to_form(email_changeset))
       |> assign(:password_form, to_form(password_changeset))
       |> assign(:update_user_form, to_form(update_user_changeset))
@@ -204,9 +189,7 @@ defmodule Bot42Web.UserSettingsLive do
   def handle_event("validate_update_user", params, socket) do
     %{
       "user" => %{
-        "social_status" => social_status,
-        "tg_username" => tg_username,
-        "tududutu_message" => tududutu_message
+        "tg_username" => tg_username
       }
     } = params
 
@@ -219,9 +202,7 @@ defmodule Bot42Web.UserSettingsLive do
     {:noreply,
      assign(socket,
        update_user_form: update_user_form,
-       current_social_status: social_status,
-       current_tg_username: tg_username,
-       current_tududutu_message: tududutu_message
+       current_tg_username: tg_username
      )}
   end
 

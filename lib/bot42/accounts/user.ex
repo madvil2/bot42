@@ -5,8 +5,6 @@ defmodule Bot42.Accounts.User do
   schema "users" do
     field :email, :string
     field :tg_username, :string
-    field :tududutu_message, :string
-    field :social_status, :string
     field :password, :string, virtual: true, redact: true
     field :hashed_password, :string, redact: true
     field :confirmed_at, :naive_datetime
@@ -129,7 +127,7 @@ defmodule Bot42.Accounts.User do
   """
   def update_changeset(user, attrs \\ %{}, _opts \\ []) do
     user
-    |> cast(attrs, [:tg_username, :social_status, :tududutu_message])
+    |> cast(attrs, [:tg_username])
     |> unique_constraint(:tg_username)
   end
 
