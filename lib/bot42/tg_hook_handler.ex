@@ -13,6 +13,10 @@ defmodule Bot42.TgHookHandler do
     %Telegex.Hook.Config{server_port: env_config[:server_port]}
   end
 
+  def on_update(%{message: %{text: "/test", chat: chat}}) do
+    Telegex.Client.send_message(chat.id, "test passed")
+  end
+
   def handle_message(%{"text" => text, "chat" => %{"id" => chat_id}}) do
     if String.starts_with?(text, "/gpt") do
       query = String.trim_leading(text, "/gpt ")
