@@ -13,6 +13,45 @@ defmodule Bot42.TgHookHandler do
     %Telegex.Hook.Config{server_port: env_config[:server_port]}
   end
 
+  def handle_message(%{"text" => text, "chat" => %{"id" => chat_id}}) do
+    if String.starts_with?(text, "/gpt") do
+      query = String.trim_leading(text, "/gpt ")
+      send_chat_gpt_request(query, chat_id)
+    else
+      :ignore
+    end
+  end
+
+  defp send_chat_gpt_request(query, chat_id) do
+    api_key = "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"
+    url = "https://api.openai.com/v1/engines/text-davinci-003/completions"
+
+    headers = [
+      {"Authorization", "Bearer #{api_key}"},
+      {"Content-Type", "application/json"}
+    ]
+
+    body = %{
+      prompt: query,
+      max_tokens: 150,
+      temperature: 0.7
+    }
+    |> Jason.encode!()
+
+    case HTTPoison.post(url, body, headers) do
+      {:ok, %HTTPoison.Response{status_code: 200, body: response_body}} ->
+        response = Jason.decode!(response_body)
+        text_response = response["choices"] |> List.first() |> Map.get("text")
+        send_response_to_user(text_response, chat_id)
+      {:error, %HTTPoison.Error{reason: reason}} ->
+        {:error, reason}
+    end
+  end
+
+  defp send_response_to_user(text_response, chat_id) do
+    Telegex.Bot.send_message(chat_id, text_response)
+  end
+
   def on_update(%{message: %{text: "/today", from: from, chat: chat} = message}) do
     send_today_events(chat.id)
   end
