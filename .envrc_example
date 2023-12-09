@@ -1,0 +1,11 @@
+# # Database
+# export DATABASE_URL="postgres://postgres:@localhost/bot42_db"
+
+# # Server
+# export PHX_SERVER=true
+# export HOST="tbot.madvil2.me"
+# export SECRET_KEY_BASE="secret_key"
+
+# # Telegram
+# export TG_WEBHOOK_URL="http://localhost:88/updates_hook"
+# export TG_WEBHOOK_SERVER_PORT="88"
