@@ -13,13 +13,13 @@ defmodule Bot42.TgHookHandler do
     %Telegex.Hook.Config{server_port: env_config[:server_port]}
   end
 
-  def on_update(%{message: %{text: "/test", chat: chat}}) do
+  def on_update(%{message: %{text: "/test@school42bot", chat: chat}}) do
     Telegex.Client.send_message(chat.id, "test passed")
   end
 
   def handle_message(%{"text" => text, "chat" => %{"id" => chat_id}}) do
-    if String.starts_with?(text, "/gpt") do
-      query = String.trim_leading(text, "/gpt ")
+    if String.starts_with?(text, "/gpt@school42bot") do
+      query = String.trim_leading(text, "/gpt@school42bot ")
       send_chat_gpt_request(query, chat_id)
     else
       :ignore
@@ -56,7 +56,7 @@ defmodule Bot42.TgHookHandler do
     Telegex.Bot.send_message(chat_id, text_response)
   end
 
-  def on_update(%{message: %{text: "/today", from: from, chat: chat} = message}) do
+  def on_update(%{message: %{text: "/today@school42bot", from: from, chat: chat} = message}) do
     send_today_events(chat.id)
   end
 
@@ -133,7 +133,7 @@ defmodule Bot42.TgHookHandler do
 
 
   @spec handle_user_commands(String.t() | nil, Telegex.Type.Chat.t()) :: :ok
-  defp handle_user_commands("/help", %{id: chat_id}) do
+  defp handle_user_commands("/help@school42bot", %{id: chat_id}) do
     text = "HELP: /help for help"
 
     {:ok, message} = Telegex.send_message(chat_id, text)
@@ -144,7 +144,7 @@ defmodule Bot42.TgHookHandler do
   end
 
   @spec handle_admin_command(String.t() | nil, Telegex.Type.Chat.t(), Accounts.User.t()) :: :ok
-  defp handle_admin_command("/help", %{id: chat_id}, user) do
+  defp handle_admin_command("/help@school42bot", %{id: chat_id}, user) do
     text = "HELP: /help for help"
 
     {:ok, message} = Telegex.send_message(chat_id, text)
