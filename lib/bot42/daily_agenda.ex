@@ -17,8 +17,13 @@ defmodule Bot42.DailyAgenda do
   @spec today_events_from_calendar :: {:ok, [map()] | []} | {:error, :external_api_error | term()}
   defp today_events_from_calendar do
     case HTTPoison.get(daily_agenda_url()) do
-      {:ok, %{status_code: 200, body: body}} -> parse_ical_data(body)
-      _ -> {:error, :external_api_error}
+      {:ok, %{status_code: 200, body: body}} ->
+        IO.inspect(body, label: "Ответ от календаря")
+        parse_ical_data(body)
+
+      response ->
+        IO.inspect(response, label: "Неудачный ответ от календаря")
+        {:error, :external_api_error}
     end
   end
 
