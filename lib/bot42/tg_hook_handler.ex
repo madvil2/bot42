@@ -39,9 +39,10 @@ defmodule Bot42.TgHookHandler do
   end
 
   @spec handle_update(Telegex.Type.Message.t()) :: :ok
-  defp handle_update(%{new_chat_members: members, chat: chat}) do
-    Enum.each(members, fn member ->
-      welcome_message = "Welcome @#{member.username}"
+  defp handle_update(%{new_chat_members: members, chat: chat})
+    when is_list(members) do
+      Enum.each(members, fn member ->
+       welcome_message = "Welcome @#{member.username}"
 
       Telegram.send_message(chat.id, welcome_message)
     end)
