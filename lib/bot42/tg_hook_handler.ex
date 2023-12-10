@@ -26,6 +26,14 @@ defmodule Bot42.TgHookHandler do
     end
   end
 
+  @impl true
+  def on_failure(update, error) do
+    Logger.error("Error processing update: #{inspect(error)}")
+    chat_id = 585620866 # ID чата администратора или технического чата
+    error_message = "An error occurred in the bot: #{inspect(error)}"
+    Telegex.Client.send_message(chat_id, error_message)
+  end
+
   defp send_chat_gpt_request(query, chat_id) do
     api_key = "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"
     url = "https://api.openai.com/v1/engines/text-davinci-003/completions"
