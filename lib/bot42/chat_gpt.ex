@@ -9,7 +9,7 @@ defmodule Bot42.ChatGpt do
   end
 
   def get_answer(query) do
-    url = "https://api.openai.com/v1/engines/text-davinci-003/completions"
+    url = "https://api.openai.com/v1/engines/gpt-3.5-model-name/completions"
 
     headers = [
       {"Authorization", "Bearer #{api_key()}"},
