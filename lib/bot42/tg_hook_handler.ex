@@ -48,8 +48,8 @@ defmodule Bot42.TgHookHandler do
     end)
   end
 
-  defp handle_update(%{text: "/gpt@school42bot" <> text, chat: chat}) do
-    with gpt_query <- String.trim_leading(text, "/gpt@school42bot "),
+  defp handle_update(%{text: "/gpt" <> text, chat: chat}) do
+    with gpt_query <- String.trim_leading(text, "/gpt "),
           {:ok, answer} <- ChatGpt.get_answer(gpt_query) do
       :ok = Telegram.send_message(chat.id, answer)
     end
@@ -57,7 +57,7 @@ defmodule Bot42.TgHookHandler do
     :ok
   end
 
-  defp handle_update(%{text: "/today@school42bot" <> text, chat: chat}) do
+  defp handle_update(%{text: "/today" <> text, chat: chat}) do
     with {:ok, events_message} <- DailyAgenda.formated_today_events() do
       :ok = Telegram.send_message(chat.id, events_message)
     end
@@ -65,7 +65,7 @@ defmodule Bot42.TgHookHandler do
     :ok
   end
 
-  defp handle_update(%{text: "/help@school42bot" <> _text, chat: chat}) do
+  defp handle_update(%{text: "/help" <> _text, chat: chat}) do
     help_message = "HELP: /help for help"
 
     Telegram.send_message(chat.id, help_message)
