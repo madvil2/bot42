@@ -26,6 +26,7 @@ defmodule Bot42.DailyAgenda do
   defp parse_ical_data(ical_data) do
     case ICalendar.from_ics(ical_data) do
       {:ok, calendars} ->
+        IO.inspect(ical_data, label: "ical_data")
         today = Date.utc_today()
 
         events =
