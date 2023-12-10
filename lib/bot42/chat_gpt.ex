@@ -33,12 +33,9 @@ defmodule Bot42.ChatGpt do
           |> List.first()
           |> Map.get("text")
 
-          IO.inspect(text_response, label: "ChatGPT Response")
           {:ok, text_response}
 
       {:error, %HTTPoison.Error{reason: reason}} ->
-        IO.inspect(reason, label: "HTTP Error")
-
         {:error, reason}
     end
   end

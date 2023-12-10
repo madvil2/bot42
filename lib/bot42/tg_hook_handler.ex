@@ -70,4 +70,8 @@ defmodule Bot42.TgHookHandler do
 
     Telegram.send_message(chat.id, help_message)
   end
+
+  defp handle_update(update) do
+    IO.inspect(update, label: "Unknown update")
+  end
 end
