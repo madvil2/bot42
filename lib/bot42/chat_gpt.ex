@@ -9,7 +9,7 @@ defmodule Bot42.ChatGpt do
   end
 
   def get_answer(query) do
-    url = "https://api.openai.com/v1/engines/gpt-3.5-turbo-0613/completions"
+    url = "https://api.openai.com/v1/engines/gpt-3.5-turbo-0613/chat/completions"
 
     headers = [
       {"Authorization", "Bearer #{api_key()}"},

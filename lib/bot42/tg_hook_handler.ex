@@ -49,8 +49,8 @@ defmodule Bot42.TgHookHandler do
   end
 
   defp handle_update(%{text: "/gpt" <> text, chat: chat}) do
-    with gpt_query <- String.trim_leading(text, "/gpt "),
-          {:ok, answer} <- ChatGpt.get_answer(gpt_query) do
+    with gpt_query <- text |> String.trim_leading("/gpt ") |> String.trim(),
+         {:ok, answer} <- ChatGpt.get_answer(gpt_query) do
       :ok = Telegram.send_message(chat.id, answer)
     end
 
