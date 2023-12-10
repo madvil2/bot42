@@ -9,10 +9,15 @@ defmodule Bot42.DailyAgenda do
   @spec formated_today_events :: {:ok, [map()] | []} | {:error, term()}
   def formated_today_events do
     case today_events_from_calendar() do
-      {:ok, events} -> {:ok, format_events(events)}
-      {:error, _} = error -> error
+      {:ok, events} ->
+        IO.inspect(events, label: "События перед форматированием")
+        {:ok, format_events(events)}
+
+      {:error, _} = error ->
+        error
     end
   end
+
 
   @spec today_events_from_calendar :: {:ok, [map()] | []} | {:error, :external_api_error | term()}
   defp today_events_from_calendar do
@@ -33,20 +38,27 @@ defmodule Bot42.DailyAgenda do
       {:ok, calendars} ->
         IO.inspect(ical_data, label: "ical_data")
         today = Date.utc_today()
+        current_time = DateTime.utc_now()
 
         events =
           Enum.flat_map(calendars, fn calendar ->
             Enum.filter(calendar.events, fn event ->
-              event.dtstart <= today and event.dtend >= today
+              date_comparison = Date.compare(event.dtstart, today)
+              (date_comparison in [:eq, :lt]) and event.dtend > current_time
             end)
           end)
 
-        {:ok, events}
+        case events do
+          [] -> {:ok, "No events"}
+          _ -> {:ok, events}
+        end
 
-        _ ->
-          {:error, :invalid_data}
+      _ ->
+        {:error, :invalid_data}
     end
   end
+
+
 
   @spec format_events([map()] | []) :: String.t()
   defp format_events(events) do
