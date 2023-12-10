@@ -84,13 +84,12 @@ defmodule Bot42.DailyAgenda do
 
   @spec format_events([map()] | []) :: String.t()
   defp format_events(events) do
-    events
-    |> Enum.map(fn event ->
-      start_time = Calendar.strftime(event.dtstart, "%a, %B %d %Y")
-      end_time = Calendar.strftime(event.dtend, "%a, %B %d %Y")
+    "Today's Agenda:\n" <>
+      Enum.map_join(events, "\n", fn event ->
+        start_time = Calendar.strftime(event.dtstart, "%H:%M")
+        end_time = Calendar.strftime(event.dtend, "%H:%M")
 
-      "#{event.summary}: from #{start_time} to #{end_time}"
-    end)
-    |> Enum.join("\n")
+        "#{event.summary}: from #{start_time} to #{end_time}"
+      end)
   end
 end
