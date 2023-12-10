@@ -45,19 +45,24 @@ defmodule Bot42.DailyAgenda do
     Enum.filter(events, fn event -> DateTime.to_date(event.dtstart)== today end)
   end
 
-  @spec format_events([map()] | []) :: String.t()
+  @spec format_events([%ICalendar.Event{}] | []) :: String.t()
   defp format_events(events) do
     case events do
-      [] -> "Today's Agenda:\nNo events for today"
+      [] ->
+        "📅 **Today's Events**\n" <>
+        "Unfortunately, there are no events scheduled for today. 😔"
 
       events ->
-        "Today's Agenda:\n" <>
-          Enum.map_join(events, "\n", fn event ->
-            start_time = Calendar.strftime(event.dtstart, "%H:%M")
-            end_time = Calendar.strftime(event.dtend, "%H:%M")
+        "📅 **Today's Events**\n" <>
+        Enum.map_join(events, "\n\n", fn event ->
+          start_time = Calendar.strftime(event.dtstart, "%H:%M")
+          end_time = Calendar.strftime(event.dtend, "%H:%M")
 
-            "#{event.summary}: from #{start_time} to #{end_time}"
-          end)
+          "📌 **#{event.summary}**\n" <>
+          "🕒 Time: #{start_time} - #{end_time}\n" <>
+          (if event.location != nil, do: "📍 Location: #{event.location}\n", else: "") <>
+          (if event.description != nil, do: "ℹ️ Description: #{String.slice(event.description, 0, 100)}...\n", else: "")
+        end)
     end
   end
 end
