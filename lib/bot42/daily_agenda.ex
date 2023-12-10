@@ -10,7 +10,7 @@ defmodule Bot42.DailyAgenda do
   def formated_today_events do
     case today_events_from_calendar() do
       {:ok, events} ->
-        # IO.inspect(events, label: "События перед форматированием")
+        IO.inspect(events, label: "События перед форматированием")
         {:ok, format_events(events)}
 
       {:error, _} = error ->
@@ -55,12 +55,13 @@ defmodule Bot42.DailyAgenda do
     events =
       Enum.flat_map(calendars, fn calendar ->
         Enum.filter(calendar.events, fn event ->
-          Date.compare(event.dtstart, today) == :eq and event.dtstart > current_time
+          date_comparison = Date.compare(event.dtstart, today)
+          (date_comparison in [:eq, :lt]) and event.dtend > current_time
         end)
       end)
 
     case events do
-      [] -> {:ok, []}
+      [] -> {:ok, "No events"}
       _ -> {:ok, events}
     end
   end
@@ -71,11 +72,12 @@ defmodule Bot42.DailyAgenda do
 
     filtered_events =
       Enum.filter(events, fn event ->
-        Date.compare(event.dtstart, today) == :eq and event.dtstart > current_time
+        date_comparison = Date.compare(event.dtstart, today)
+        (date_comparison in [:eq, :lt]) and event.dtend > current_time
       end)
 
     case filtered_events do
-      [] -> {:ok, []}
+      [] -> {:ok, "No events"}
       _ -> {:ok, filtered_events}
     end
   end
