@@ -41,9 +41,10 @@ defmodule Bot42.ChatGpt do
 
         text_response =
           decoded_response
-          |> Map.get("choices", [%{"text" => @no_result_message}])
+          |> Map.get("choices", [%{"message" => %{"content" => @no_result_message}}])
           |> List.first()
-          |> Map.get("text")
+          |> Map.get("message")
+          |> Map.get("content")
 
         {:ok, text_response}
 
