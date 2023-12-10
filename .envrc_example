@@ -1,11 +1,16 @@
 # # Database
-# export DATABASE_URL="postgres://postgres:@localhost/bot42_db"
+# export DATABASE_URL="postgres://USER:PASSWORD@HOST/DB"
 
 # # Server
-# export PHX_SERVER=true
 # export HOST="tbot.madvil2.me"
 # export SECRET_KEY_BASE="secret_key"
 
 # # Telegram
 # export TG_WEBHOOK_URL="http://localhost:88/updates_hook"
 # export TG_WEBHOOK_SERVER_PORT="88"
+
+# # Chat Gpt
+# export CHAT_GPT_API_KEY="chat_ght_api_key"
+
+# # Telegram admin chat
+# export TELEGRAM_ADMIN_CHAT_ID="tg_admin_chat_id"

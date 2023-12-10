@@ -27,6 +27,14 @@ config :bot42, Bot42.TgHookHandler,
   webhook_url: tg_webhook_url,
   server_port: String.to_integer(tg_webhook_server_port)
 
+chat_gpt_api_key = System.fetch_env!("CHAT_GPT_API_KEY")
+
+config :bot42, :chat_gpt, api_key: chat_gpt_api_key
+
+tg_admin_chat_id = "TELEGRAM_ADMIN_CHAT_ID" |> System.fetch_env!() |> String.to_integer()
+
+config :bot42, :telegram, admin_chat_id: tg_admin_chat_id
+
 if config_env() == :prod do
   database_url =
     System.get_env("DATABASE_URL") ||
