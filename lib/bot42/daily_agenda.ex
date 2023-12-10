@@ -50,19 +50,19 @@ defmodule Bot42.DailyAgenda do
   defp format_events(events) do
     case events do
       [] ->
-        "📅 *Today's Events*\n" <>
+        "📅 *Today's Events*\n\n" <>
         "Unfortunately, there are no events scheduled for today 😔"
 
       events ->
-        "📅 *Today's Events*\n" <>
+        "📅 *Today's Events*\n\n" <>
         Enum.map_join(events, "\n\n", fn event ->
           start_time = Calendar.strftime(event.dtstart, "%H:%M")
           end_time = Calendar.strftime(event.dtend, "%H:%M")
 
-          "📌 *#{event.summary}*\n" <>
+          "📌 *#{event.summary}*\n\n" <>
           "🕒 Time: #{start_time} - #{end_time}\n" <>
           (if event.location != nil, do: "📍 Location: #{event.location}\n", else: "") <>
-          (if event.description != nil, do: "ℹ️ Description: #{String.slice(event.description, 0, 100)}...\n", else: "")
+          (if event.description != nil, do: "ℹ️ Description: #{String.slice(event.description, 0, 200)}...\n", else: "")
         end)
     end
   end
