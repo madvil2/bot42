@@ -9,7 +9,7 @@ defmodule Bot42.ChatGpt do
   end
 
   def get_answer(query) do
-    url = "https://api.openai.com/v1/engines/gpt-3.5-turbo-0613/chat/completions"
+    url = "https://api.openai.com/v1/chat/completions"
 
     headers = [
       {"Authorization", "Bearer #{api_key()}"},
@@ -17,9 +17,17 @@ defmodule Bot42.ChatGpt do
     ]
 
     body = %{
-      prompt: query,
-      max_tokens: 150,
-      temperature: 0.7
+      model: "gpt-3.5-turbo",
+      messages: [
+        %{
+          role: "system",
+          content: "You are a helpful assistant."
+        },
+        %{
+          role: "user",
+          content: query
+        }
+      ]
     }
     |> Jason.encode!()
 
