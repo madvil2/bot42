@@ -23,7 +23,6 @@ defmodule Bot42.DailyAgenda do
   defp today_events_from_calendar do
     case HTTPoison.get(daily_agenda_url()) do
       {:ok, %{status_code: 200, body: body}} ->
-        IO.inspect(body, label: "Ответ от календаря")
         parse_ical_data(body)
 
       response ->
@@ -32,25 +31,16 @@ defmodule Bot42.DailyAgenda do
     end
   end
 
-  @spec parse_ical_data(Strig.t()) :: {:ok, [map()] | []} | {:error, :invalid_data}
   defp parse_ical_data(ical_data) do
     case ICalendar.from_ics(ical_data) do
       {:ok, calendars} ->
-        IO.inspect(ical_data, label: "ical_data")
-        today = Date.utc_today()
-        current_time = DateTime.utc_now()
+        filter_and_process_events(calendars)
 
-        events =
-          Enum.flat_map(calendars, fn calendar ->
-            Enum.filter(calendar.events, fn event ->
-              date_comparison = Date.compare(event.dtstart, today)
-              (date_comparison in [:eq, :lt]) and event.dtend > current_time
-            end)
-          end)
-
-        case events do
-          [] -> {:ok, "No events"}
-          _ -> {:ok, events}
+      events when is_list(events) ->
+        if Enum.all?(events, &is_struct(&1, ICalendar.Event)) do
+          filter_and_process_events_direct(events)
+        else
+          {:error, :invalid_data}
         end
 
       _ ->
@@ -58,7 +48,39 @@ defmodule Bot42.DailyAgenda do
     end
   end
 
+  defp filter_and_process_events(calendars) do
+    today = Date.utc_today()
+    current_time = DateTime.utc_now()
 
+    events =
+      Enum.flat_map(calendars, fn calendar ->
+        Enum.filter(calendar.events, fn event ->
+          date_comparison = Date.compare(event.dtstart, today)
+          (date_comparison in [:eq, :lt]) and event.dtend > current_time
+        end)
+      end)
+
+    case events do
+      [] -> {:ok, "No events"}
+      _ -> {:ok, events}
+    end
+  end
+
+  defp filter_and_process_events_direct(events) do
+    today = Date.utc_today()
+    current_time = DateTime.utc_now()
+
+    filtered_events =
+      Enum.filter(events, fn event ->
+        date_comparison = Date.compare(event.dtstart, today)
+        (date_comparison in [:eq, :lt]) and event.dtend > current_time
+      end)
+
+    case filtered_events do
+      [] -> {:ok, "No events"}
+      _ -> {:ok, filtered_events}
+    end
+  end
 
   @spec format_events([map()] | []) :: String.t()
   defp format_events(events) do
