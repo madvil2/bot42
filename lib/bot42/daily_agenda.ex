@@ -60,7 +60,7 @@ defmodule Bot42.DailyAgenda do
           end_time = Calendar.strftime(event.dtend, "%H:%M")
 
           "📌 *#{event.summary}*\n\n" <>
-          "🕒 Time: #{start_time} - #{end_time}\n" <>
+          "🕒 Time: #{start_time} \- #{end_time}\n" <>
           (if event.location != nil, do: "📍 Location: #{event.location}\n", else: "") <>
           (if event.description != nil, do: "ℹ️ Description: #{String.slice(event.description, 0, 200)}...\n", else: "")
         end)
