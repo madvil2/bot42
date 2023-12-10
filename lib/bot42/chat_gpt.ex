@@ -8,8 +8,8 @@ defmodule Bot42.ChatGpt do
     |> Keyword.fetch!(:api_key)
   end
 
-  @spec get_answer(term(), integer()) :: {:ok, String.t()} | {:error, term()}
-  def get_answer(query, chat_id) do
+  @spec get_answer(term()) :: {:ok, String.t()} | {:error, term()}
+  def get_answer(query) do
     url = "https://api.openai.com/v1/engines/text-davinci-003/completions"
 
     headers = [

@@ -1,72 +1,56 @@
 defmodule Bot42.DailyAgenda do
-  defp fetch_and_send_today_events(chat_id) do
-    events = fetch_today_events_from_calendar()
-    formatted_events = format_events(events)
-    Telegram.send_message(chat_id, formatted_events)
+  @spec daily_agenda_url :: String.t()
+  defp daily_agenda_url do
+    :bot42
+    |> Application.fetch_env!(:daily_agenda)
+    |> Keyword.fetch!(:url)
   end
 
-  defp fetch_today_events_from_calendar() do
-    {:ok, response} = HTTPoison.get("https://calendar.google.com/calendar/ical/66d6b5eecc300121bc3d6af7c3a7e933f1625bef5450[…]28875bdccbdf8332@group.calendar.google.com/public/basic.ics")
-    case response.status_code do
-      200 -> parse_ical_data(response.body)
-      _ -> []
+  @spec formated_today_events :: {:ok, [map()] | []} | {:error, term()}
+  def formated_today_events do
+    case today_events_from_calendar() do
+      {:ok, events} -> {:ok, format_events(events)}
+      {:error, _} = error -> error
     end
   end
 
+  @spec today_events_from_calendar :: {:ok, [map()] | []} | {:error, :external_api_error | term()}
+  defp today_events_from_calendar do
+    case HTTPoison.get(daily_agenda_url()) do
+      {:ok, %{status_code: 200, body: body}} -> parse_ical_data(body)
+      _ -> {:error, :external_api_error}
+    end
+  end
+
+  @spec parse_ical_data(Strig.t()) :: {:ok, [map()] | []} | {:error, :invalid_data}
   defp parse_ical_data(ical_data) do
-    {:ok, calendars} = Icalendar.from_ical(ical_data)
-    today = Date.utc_today()
+    case ICalendar.from_ics(ical_data) do
+      {:ok, calendars} ->
+        today = Date.utc_today()
 
-    Enum.flat_map(calendars, fn calendar ->
-      Enum.filter(calendar.events, fn event ->
-        event.dtstart <= today and event.dtend >= today
-      end)
-    end)
+        events =
+          Enum.flat_map(calendars, fn calendar ->
+            Enum.filter(calendar.events, fn event ->
+              event.dtstart <= today and event.dtend >= today
+            end)
+          end)
+
+        {:ok, events}
+
+        _ ->
+          {:error, :invalid_data}
+    end
   end
 
-  def send_today_events(chat_id) do
-    events = fetch_today_events_from_calendar()
-    formatted_events = format_events(events)
-
-    Telegram.send_message(chat_id, formatted_events)
-  end
-
+  @spec format_events([map()] | []) :: String.t()
   defp format_events(events) do
-    Enum.map(events, fn event ->
-      start_time = format_time(event.dtstart)
-      end_time = format_time(event.dtend)
+    events
+    |> Enum.map(fn event ->
+      start_time = Calendar.strftime(event.dtstart, "%a, %B %d %Y")
+      end_time = Calendar.strftime(event.dtend, "%a, %B %d %Y")
+
       "#{event.summary}: from #{start_time} to #{end_time}"
     end)
     |> Enum.join("\n")
-  end
-
-  defp format_time(%DateTime{hour: hour, minute: minute}) do
-    "#{pad_zero(hour)}:#{pad_zero(minute)}"
-  end
-
-  defp pad_zero(num) when num < 10, do: "0#{num}"
-  defp pad_zero(num), do: "#{num}"
-
-
-  @spec handle_user_commands(String.t() | nil, Telegex.Type.Chat.t()) :: :ok
-  defp handle_user_commands("/help@school42bot", %{id: chat_id}) do
-    text = "HELP: /help for help"
-
-    {:ok, message} = Telegex.send_message(chat_id, text)
-
-    Logger.info("Sent telegam tududu message: #{inspect(message)}")
-
-    :ok
-  end
-
-  @spec handle_admin_command(String.t() | nil, Telegex.Type.Chat.t(), Accounts.User.t()) :: :ok
-  defp handle_admin_command("/help@school42bot", %{id: chat_id}, user) do
-    text = "HELP: /help for help"
-
-    {:ok, message} = Telegex.send_message(chat_id, text)
-
-    Logger.info("Sent telegam tududu message: #{inspect(message)}")
-
-    :ok
   end
 end
