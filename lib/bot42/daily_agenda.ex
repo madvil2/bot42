@@ -100,7 +100,7 @@ defmodule Bot42.DailyAgenda do
     if Enum.empty?(events) do
       "And there are no upcoming events either 🙁\n\n"
     else
-      "However, here are the next 3 events:\n\n" <>
+      "*However, here are the next 3 events:*\n\n" <>
         Enum.map_join(events, "\n\n", fn event ->
           start_time = Calendar.strftime(event.dtstart, "%H:%M")
           end_time = Calendar.strftime(event.dtend, "%H:%M")
