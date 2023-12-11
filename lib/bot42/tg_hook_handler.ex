@@ -57,12 +57,19 @@ defmodule Bot42.TgHookHandler do
     :ok
   end
 
-  defp handle_update(%{text: "/today" <> _text, chat: chat}) do
+  defp handle_update(%{text: "/today" <> _text, chat: %{"id" => chat_id}}) do
     with {:ok, events_message} <- DailyAgenda.formated_today_events() do
-      :ok = Telegram.send_message(chat.id, events_message, parse_mode: "MarkdownV2")
+      case Telegram.send_message(chat_id, events_message, parse_mode: "MarkdownV2") do
+        :ok -> :ok
+        {:error, reason} ->
+          Logger.error("Failed to send message: #{inspect(reason)}")
+          {:error, reason}
+      end
+    else
+      {:error, reason} ->
+        Logger.error("Failed to get today's events: #{inspect(reason)}")
+        {:error, reason}
     end
-
-    :ok
   end
 
   defp handle_update(%{text: "/help" <> _text, chat: chat}) do

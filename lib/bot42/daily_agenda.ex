@@ -40,8 +40,8 @@ defmodule Bot42.DailyAgenda do
 
   @spec filter_today_events([map()] | []) :: [map()] | []
   defp filter_today_events(events) do
-    # today = Date.utc_today()
-    today = ~D[2023-09-27]
+    today = Date.utc_today()
+    # today = ~D[2023-09-27]
 
     Enum.filter(events, fn event -> DateTime.to_date(event.dtstart)== today end)
   end
