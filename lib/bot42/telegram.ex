@@ -1,11 +1,11 @@
 defmodule Bot42.Telegram do
   require Logger
 
-  @spec send_message(integer(), String.t(), keyword() | nil) :: {:ok, term()} | {:error, term()}
+  @spec send_message(integer(), String.t(), keyword() | nil) :: :ok | {:error, term()}
   def send_message(chat_id, message, opts \\ []) do
     case Telegex.send_message(chat_id, escape_telegram(message), opts) do
-      {:ok, response} ->
-        {:ok, response}
+      {:ok, _} ->
+        :ok
 
       {:error, reason} ->
         log_and_notify_error(reason, %{chat_id: chat_id, message: message, opts: opts})
