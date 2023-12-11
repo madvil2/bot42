@@ -40,9 +40,9 @@ defmodule Bot42.TgHookHandler do
 
   @spec handle_update(Telegex.Type.Message.t()) :: :ok
   defp handle_update(%{new_chat_members: members, chat: chat})
-    when is_list(members) do
-      Enum.each(members, fn member ->
-       welcome_message = "Welcome @#{member.username}"
+       when is_list(members) do
+    Enum.each(members, fn member ->
+      welcome_message = "Welcome @#{member.username}"
 
       Telegram.send_message(chat.id, welcome_message)
     end)
@@ -51,7 +51,11 @@ defmodule Bot42.TgHookHandler do
   defp handle_update(%{text: "/gpt" <> text, chat: chat, message_id: message_id}) do
     with gpt_query <- text |> String.trim_leading("/gpt ") |> String.trim(),
          {:ok, answer} <- ChatGpt.get_answer(gpt_query) do
-      :ok = Telegram.send_message(chat.id, answer, reply_to_message_id: message_id, parse_mode: "MarkdownV2")
+      :ok =
+        Telegram.send_message(chat.id, answer,
+          reply_to_message_id: message_id,
+          parse_mode: "MarkdownV2"
+        )
     end
 
     :ok
@@ -59,8 +63,7 @@ defmodule Bot42.TgHookHandler do
 
   defp handle_update(%{text: "/today" <> _text, chat: chat}) do
     with {:ok, events_message} <- DailyAgenda.formated_today_events() do
-      response = Telegram.send_message(chat.id, events_message, parse_mode: "MarkdownV2")
-      IO.inspect(response, label: "Ответ от send_message")
+      :ok = Telegram.send_message(chat.id, events_message, parse_mode: "MarkdownV2")
     end
 
     :ok

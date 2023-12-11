@@ -16,20 +16,21 @@ defmodule Bot42.ChatGpt do
       {"Content-Type", "application/json"}
     ]
 
-    body = %{
-      model: "gpt-3.5-turbo",
-      messages: [
-        %{
-          role: "system",
-          content: "You are a helpful assistant."
-        },
-        %{
-          role: "user",
-          content: query
-        }
-      ]
-    }
-    |> Jason.encode!()
+    body =
+      %{
+        model: "gpt-3.5-turbo",
+        messages: [
+          %{
+            role: "system",
+            content: "You are a helpful assistant."
+          },
+          %{
+            role: "user",
+            content: query
+          }
+        ]
+      }
+      |> Jason.encode!()
 
     IO.inspect(query, label: "Отправленный запрос")
     IO.inspect(body, label: "Тело запроса")

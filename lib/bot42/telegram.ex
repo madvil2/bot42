@@ -15,11 +15,11 @@ defmodule Bot42.Telegram do
 
   @spec escape_telegram(String.t()) :: String.t()
   defp escape_telegram(str) do
-      str
-      |> String.replace("#", "\\#")
-      |> String.replace("-", "\\-")
-      |> String.replace(".", "\\.")
-      |> String.replace("!", "\\!")
+    str
+    |> String.replace("#", "\\#")
+    |> String.replace("-", "\\-")
+    |> String.replace(".", "\\.")
+    |> String.replace("!", "\\!")
   end
 
   defp log_and_notify_error(error, update) do

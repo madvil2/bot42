@@ -43,26 +43,76 @@ defmodule Bot42.DailyAgenda do
     today = Date.utc_today()
     # today = ~D[2023-09-27]
 
-    Enum.filter(events, fn event -> DateTime.to_date(event.dtstart)== today end)
+    Enum.filter(events, fn event -> DateTime.to_date(event.dtstart) == today end)
+  end
+
+  @spec next_three_events([map()] | []) :: [map()] | []
+  defp next_three_events(events) do
+    today = Date.utc_today()
+
+    events
+    |> Enum.filter(fn event ->
+      event.dtstart
+      |> DateTime.to_date()
+      |> Date.after?(today)
+    end)
+    |> IO.inspect()
+    |> Enum.take(3)
   end
 
   @spec format_events([%ICalendar.Event{}] | []) :: String.t()
   defp format_events(events) do
     case events do
       [] ->
-        "📅 *Today's Events*\n\n" <>
-        "Unfortunately, there are no events scheduled for today 😔"
+        next_events =
+          events_from_calendar()
+          |> case do
+            {:ok, events} -> next_three_events(events)
+            _ -> []
+          end
+
+        events_text = if Enum.empty?(next_events), do: "", else: format_next_events(next_events)
+
+        "📆 *Today's Events*\n\n" <>
+          "Unfortunately, there are no events scheduled for today 😔\n\n" <>
+          events_text
 
       events ->
-        "📅 *Today's Events*\n\n" <>
+        "📆 *Today's Events*\n\n" <>
+          Enum.map_join(events, "\n\n", fn event ->
+            start_time = Calendar.strftime(event.dtstart, "%H:%M")
+            end_time = Calendar.strftime(event.dtend, "%H:%M")
+            date = Calendar.strftime(event.dtstart, "%Y-%m-%d")
+
+            "📌 *#{event.summary}*\n\n" <>
+              "🗓️ Date: #{date}\n" <>
+              "🕒 Time: #{start_time} - #{end_time}\n" <>
+              if(event.location != nil, do: "📍 Location: #{event.location}\n", else: "") <>
+              if event.description != nil,
+                do: "ℹ️ Description: #{String.slice(event.description, 0, 200)}...\n",
+                else: ""
+          end)
+    end
+  end
+
+  @spec format_next_events([%ICalendar.Event{}] | []) :: String.t()
+  defp format_next_events(events) do
+    if Enum.empty?(events) do
+      "And there are no upcoming events either 🙁\n\n"
+    else
+      "However, here are the next 3 events:\n\n" <>
         Enum.map_join(events, "\n\n", fn event ->
           start_time = Calendar.strftime(event.dtstart, "%H:%M")
           end_time = Calendar.strftime(event.dtend, "%H:%M")
+          date = Calendar.strftime(event.dtstart, "%Y-%m-%d")
 
           "📌 *#{event.summary}*\n\n" <>
-          "🕒 Time: #{start_time} - #{end_time}\n" <>
-          (if event.location != nil, do: "📍 Location: #{event.location}\n", else: "") <>
-          (if event.description != nil, do: "ℹ️ Description: #{String.slice(event.description, 0, 200)}...\n", else: "")
+            "🗓️ Date: #{date}\n" <>
+            "🕒 Time: #{start_time} - #{end_time}\n" <>
+            if(event.location != nil, do: "📍 Location: #{event.location}\n", else: "") <>
+            if event.description != nil,
+              do: "ℹ️ Description: #{String.slice(event.description, 0, 200)}...\n",
+              else: ""
         end)
     end
   end
