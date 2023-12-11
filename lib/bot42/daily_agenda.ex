@@ -56,7 +56,7 @@ defmodule Bot42.DailyAgenda do
       |> DateTime.to_date()
       |> Date.after?(today)
     end)
-    |> IO.inspect()
+    |> Enum.sort_by(& &1.dtstart, DateTime)
     |> Enum.take(3)
   end
 

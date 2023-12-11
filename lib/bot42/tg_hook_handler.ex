@@ -61,9 +61,14 @@ defmodule Bot42.TgHookHandler do
     :ok
   end
 
-  defp handle_update(%{text: "/today" <> _text, chat: chat}) do
+  defp handle_update(%{text: "/today" <> _text, chat: chat, message_id: message_id}) do
     with {:ok, events_message} <- DailyAgenda.formated_today_events() do
-      :ok = Telegram.send_message(chat.id, events_message, parse_mode: "MarkdownV2")
+      :ok =
+        Telegram.send_message(chat.id, events_message,
+          parse_mode: "MarkdownV2",
+          disable_web_page_preview: true,
+          reply_to_message_id: message_id
+        )
     end
 
     :ok

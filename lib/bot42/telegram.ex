@@ -22,6 +22,10 @@ defmodule Bot42.Telegram do
     |> String.replace("!", "\\!")
     |> String.replace("(", "\\(")
     |> String.replace(")", "\\)")
+    |> String.replace("+", "\\+")
+    |> String.replace("=", "\\=")
+    |> String.replace(">", "\\>")
+    |> String.replace("<", "\\<")
   end
 
   defp log_and_notify_error(error, update) do
