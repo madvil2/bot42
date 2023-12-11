@@ -33,7 +33,7 @@ defmodule Bot42.ChatGpt do
 
     IO.inspect(query, label: "Отправленный запрос")
     IO.inspect(body, label: "Тело запроса")
-    options = [timeout: 20_000, recv_timeout: 20_000]
+    options = [timeout: 40_000, recv_timeout: 40_000]
 
     case HTTPoison.post(url, body, headers, options) do
       {:ok, %HTTPoison.Response{status_code: 200, body: response_body}} ->
