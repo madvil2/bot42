@@ -87,7 +87,7 @@ defmodule Bot42.DailyAgenda do
             "📌 *#{event.summary}*\n\n" <>
               "🗓️ *Date:* #{date}\n" <>
               "🕒 *Time:* #{start_time} - #{end_time}\n" <>
-              if(event.location != nil, do: "📍 Location: #{event.location}\n", else: "") <>
+              if(event.location != nil, do: "📍 *Location:* #{event.location}\n", else: "") <>
               if event.description != nil,
                 do: "ℹ️ *Description:* #{String.slice(event.description, 0, 200)}...\n",
                 else: ""
@@ -109,7 +109,7 @@ defmodule Bot42.DailyAgenda do
           "📌 *#{event.summary}*\n\n" <>
             "🗓️ *Date:* #{date}\n" <>
             "🕒 *Time:* #{start_time} - #{end_time}\n" <>
-            if(event.location != nil, do: "📍 Location: #{event.location}\n", else: "") <>
+            if(event.location != nil, do: "📍 *Location:* #{event.location}\n", else: "") <>
             if event.description != nil,
               do: "ℹ️ *Description:* #{String.slice(event.description, 0, 200)}...\n",
               else: ""
