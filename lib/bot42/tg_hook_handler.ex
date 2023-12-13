@@ -4,6 +4,7 @@ defmodule Bot42.TgHookHandler do
   alias Bot42.ChatGpt
   alias Bot42.Telegram
   alias Bot42.DailyAgenda
+  alias Bot42.UserRequests
 
   @spec tg_admin_chat_id :: integer()
   defp tg_admin_chat_id do
@@ -50,7 +51,7 @@ defmodule Bot42.TgHookHandler do
 
   @spec handle_update(Telegex.Type.Message.t()) :: :ok
   defp handle_update(%{text: "/gpt" <> text, chat: chat, from: from, message_id: message_id}) do
-    case Bot42.UserRequests.check_and_update_requests(from.id) do
+    case UserRequests.check_and_update_requests(from.id) do
       {:ok, remaining_requests} ->
         gpt_query = text |> String.trim_leading("/gpt ") |> String.trim()
 
@@ -95,10 +96,14 @@ defmodule Bot42.TgHookHandler do
 
   @spec handle_update(Telegex.Type.Message.t()) :: :ok
   defp handle_update(%{text: "/admin " <> rest, chat: chat, from: from, message_id: message_id}) do
-    if Bot42.UserRequests.is_user_admin?(from.id) do
+    admin_chat_id = tg_admin_chat_id()
+
+    if UserRequests.is_user_admin(from.id) or admin_chat_id == chat.id do
       handle_admin_command(rest, chat, from, message_id)
     else
-      Telegram.send_message(chat.id, "Only admins can use admin commands.",
+      Telegram.send_message(
+        chat.id,
+        "Only admins can use admin commands, or use in the admin chat.",
         reply_to_message_id: message_id
       )
     end
@@ -109,10 +114,10 @@ defmodule Bot42.TgHookHandler do
 
     case action do
       "add" ->
-        Bot42.UserRequests.add_user_admin(from.id)
+        UserRequests.add_user_admin(from.id)
 
       "remove" ->
-        Bot42.UserRequests.remove_user_admin(from.id)
+        UserRequests.remove_user_admin(from.id)
 
       _ ->
         Telegram.send_message(chat.id, "Invalid admin command.", reply_to_message_id: message_id)
