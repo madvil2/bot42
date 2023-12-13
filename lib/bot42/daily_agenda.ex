@@ -121,7 +121,10 @@ defmodule Bot42.DailyAgenda do
   def send_daily_events do
     case formated_today_events() do
       {:ok, events} ->
-        send_message("585620866", format_events_for_chat(events))
+        Telegram.send_message("585620866", format_events_for_chat(events),
+          parse_mode: "MarkdownV2",
+          disable_web_page_preview: true
+        )
 
       _ ->
         :error
