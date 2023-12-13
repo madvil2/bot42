@@ -118,18 +118,21 @@ defmodule Bot42.TgHookHandler do
           {:ok, user_id} ->
             case UserRequests.add_user_admin(user_id) do
               {:ok, _} ->
-                Telegram.send_message(chat.id, "@#{username} is now an admin.",
+                Telegram.send_message(chat.id, "#{username} is now an admin.",
+                  parse_mode: "MarkdownV2",
                   reply_to_message_id: message_id
                 )
 
               {:error, _} ->
-                Telegram.send_message(chat.id, "Error adding @#{username} as an admin.",
+                Telegram.send_message(chat.id, "Error adding #{username} as an admin.",
+                  parse_mode: "MarkdownV2",
                   reply_to_message_id: message_id
                 )
             end
 
           {:error, _} ->
-            Telegram.send_message(chat.id, "User @#{username} not found.",
+            Telegram.send_message(chat.id, "User #{username} not found.",
+              parse_mode: "MarkdownV2",
               reply_to_message_id: message_id
             )
         end
@@ -138,11 +141,15 @@ defmodule Bot42.TgHookHandler do
         UserRequests.remove_user_admin(from.id)
 
         Telegram.send_message(chat.id, "You are no longer an admin.",
+          parse_mode: "MarkdownV2",
           reply_to_message_id: message_id
         )
 
       _ ->
-        Telegram.send_message(chat.id, "Invalid admin command.", reply_to_message_id: message_id)
+        Telegram.send_message(chat.id, "Invalid admin command.",
+          parse_mode: "MarkdownV2",
+          reply_to_message_id: message_id
+        )
     end
   end
 
