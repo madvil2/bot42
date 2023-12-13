@@ -18,7 +18,8 @@ defmodule Bot42.Application do
       # {Bot42.Worker, arg},
       # Start to serve requests, typically the last entry
       Bot42Web.Endpoint,
-      Bot42.TgHookHandler
+      Bot42.TgHookHandler,
+      Bot42.DailyAgendaScheduler
     ]
 
     # See https://hexdocs.pm/elixir/Supervisor.html
