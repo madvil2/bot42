@@ -37,10 +37,10 @@ config :bot42, Oban,
     Oban.Plugins.Pruner,
     {Oban.Plugins.Cron,
      crontab: [
-       {"* * * * *", Bot42.DailyAgendaWorker}
+       {"0 9 * * *", Bot42.DailyAgendaWorker}
      ]}
   ],
-  queues: [default: 10]
+  queues: [daily_agenda: 10]
 
 # Configure esbuild (the version is required)
 config :esbuild,

@@ -32,14 +32,11 @@ defmodule Bot42.ChatGpt do
       }
       |> Jason.encode!()
 
-    IO.inspect(query, label: "Отправленный запрос")
-    IO.inspect(body, label: "Тело запроса")
     options = [timeout: 40_000, recv_timeout: 40_000]
 
     case HTTPoison.post(url, body, headers, options) do
       {:ok, %HTTPoison.Response{status_code: 200, body: response_body}} ->
         decoded_response = Jason.decode!(response_body)
-        IO.inspect(decoded_response, label: "Ответ API")
 
         text_response =
           decoded_response

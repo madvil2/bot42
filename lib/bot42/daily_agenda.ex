@@ -122,48 +122,13 @@ defmodule Bot42.DailyAgenda do
   def send_daily_events do
     case formated_today_events() do
       {:ok, events} ->
-        Telegram.send_message("585620866", format_events_for_chat(events),
+        Telegram.send_message(585_620_866, events,
           parse_mode: "MarkdownV2",
           disable_web_page_preview: true
         )
 
       _ ->
         :error
-    end
-  end
-
-  @spec format_events_for_chat([%ICalendar.Event{}] | []) :: String.t()
-  defp format_events_for_chat(events) do
-    case events do
-      [] ->
-        next_events =
-          events_from_calendar()
-          |> case do
-            {:ok, events} -> next_three_events(events)
-            _ -> []
-          end
-
-        events_text = if Enum.empty?(next_events), do: "", else: format_next_events(next_events)
-
-        "📆 *Today's Events*\n\n" <>
-          "Unfortunately, there are no events scheduled for today 😔\n\n" <>
-          events_text
-
-      events ->
-        "📆 *Today's Events*\n\n" <>
-          Enum.map_join(events, "\n\n", fn event ->
-            start_time = Calendar.strftime(event.dtstart, "%H:%M")
-            end_time = Calendar.strftime(event.dtend, "%H:%M")
-            date = Calendar.strftime(event.dtstart, "%Y-%m-%d")
-
-            "📌 *#{event.summary}*\n\n" <>
-              "🗓️ *Date:* #{date}\n" <>
-              "🕒 *Time:* #{start_time} - #{end_time}\n" <>
-              if(event.location != nil, do: "📍 *Location:* #{event.location}\n", else: "") <>
-              if event.description != nil,
-                do: "ℹ️ *Description:* #{String.slice(event.description, 0, 150)}...\n",
-                else: ""
-          end)
     end
   end
 end

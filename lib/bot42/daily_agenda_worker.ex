@@ -1,8 +1,9 @@
 defmodule Bot42.DailyAgendaWorker do
-  use Oban.Worker
+  use Oban.Worker, queue: :daily_agenda
 
-  @impl true
-  def perform(%Oban.Job{}) do
+  @impl Oban.Worker
+  def perform(_) do
     Bot42.DailyAgenda.send_daily_events()
+    :ok
   end
 end

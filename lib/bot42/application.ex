@@ -7,6 +7,8 @@ defmodule Bot42.Application do
 
   @impl true
   def start(_type, _args) do
+    Oban.Telemetry.attach_default_logger()
+
     children = [
       Bot42Web.Telemetry,
       Bot42.Repo,
