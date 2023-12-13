@@ -26,6 +26,10 @@ defmodule Bot42.UserRequests do
   end
 
   def check_and_update_requests(user_id, username) do
+    # Логируем входящие значения user_id и username
+    IO.inspect(user_id, label: "user_id")
+    IO.inspect(username, label: "username")
+
     user_request =
       Repo.get_by(Bot42.UserRequests, user_id: user_id)
 
@@ -33,6 +37,9 @@ defmodule Bot42.UserRequests do
 
     case user_request do
       nil ->
+        # Логируем, когда пользователь не найден в базе
+        IO.inspect({user_id, username}, label: "New user request")
+
         new_user_request = %Bot42.UserRequests{
           user_id: user_id,
           username: username,
@@ -46,9 +53,15 @@ defmodule Bot42.UserRequests do
         {:ok, max_requests - 1}
 
       %Bot42.UserRequests{request_count: count, last_request_date: date, is_admin: true} ->
+        # Логируем для администратора
+        IO.inspect({user_id, username, count, date, true}, label: "Admin user request")
+
         {:ok, :unlimited}
 
       %Bot42.UserRequests{request_count: count, last_request_date: date, is_admin: false} ->
+        # Логируем для обычного пользователя
+        IO.inspect({user_id, username, count, date, false}, label: "Regular user request")
+
         updated_user_request =
           if date != Date.utc_today() do
             %{request_count: 1, last_request_date: Date.utc_today(), username: username}
