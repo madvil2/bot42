@@ -74,17 +74,27 @@ defmodule Bot42.UserRequests do
 
   @spec get_user_id_by_username(username :: String.t()) :: {:ok, integer()} | {:error, any()}
   def get_user_id_by_username(username) do
+    # Логирование входящего значения username
+    IO.inspect(username, label: "Searched username")
+
     query =
       from(u in Bot42.UserRequests,
         where: u.username == ^username,
         select: u.user_id
       )
 
+    # Логирование сформированного запроса
+    IO.inspect(query, label: "Database query")
+
     case Repo.one(query) do
       nil ->
+        # Логирование, если пользователь не найден
+        IO.inspect(username, label: "User not found for username")
         {:error, "User not found"}
 
       user_id ->
+        # Логирование найденного user_id
+        IO.inspect(user_id, label: "Found user_id")
         {:ok, user_id}
     end
   end
