@@ -53,14 +53,16 @@ defmodule Bot42.TgHookHandler do
   defp handle_update(%{text: "/gpt" <> text, chat: chat, message_id: message_id}) do
     user_id = chat.id
 
-    case UserRequests.check_and_update_requests(user_id) do
-      :ok ->
+    case Bot42.UserRequests.check_and_update_requests(user_id) do
+      {:ok, remaining_requests} ->
         gpt_query = text |> String.trim_leading("/gpt ") |> String.trim()
 
         case ChatGpt.get_answer(gpt_query) do
           {:ok, answer} ->
+            answer_message = answer <> "\n\nYou have #{remaining_requests} requests left today."
+
             :ok =
-              Telegram.send_message(user_id, answer,
+              Telegram.send_message(user_id, answer_message,
                 reply_to_message_id: message_id,
                 parse_mode: "MarkdownV2"
               )
@@ -69,7 +71,7 @@ defmodule Bot42.TgHookHandler do
             :error
         end
 
-      :limit_reached ->
+      {:limit_reached, _remaining_requests} ->
         :ok =
           Telegram.send_message(user_id, "You have reached your request limit for today.",
             reply_to_message_id: message_id

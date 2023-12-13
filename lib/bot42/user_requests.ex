@@ -14,6 +14,8 @@ defmodule Bot42.UserRequests do
     user_request =
       Repo.get_by(Bot42.UserRequests, user_id: user_id)
 
+    max_requests = 10
+
     case user_request do
       nil ->
         %Bot42.UserRequests{
@@ -23,7 +25,7 @@ defmodule Bot42.UserRequests do
         }
         |> Repo.insert()
 
-        :ok
+        {:ok, max_requests - 1}
 
       %Bot42.UserRequests{request_count: count, last_request_date: date} ->
         if date != Date.utc_today() do
@@ -31,16 +33,16 @@ defmodule Bot42.UserRequests do
           |> change(%{request_count: 1, last_request_date: Date.utc_today()})
           |> Repo.update()
 
-          :ok
+          {:ok, max_requests - 1}
         else
-          if count >= 10 do
-            :limit_reached
+          if count >= max_requests do
+            {:limit_reached, 0}
           else
             user_request
             |> change(%{request_count: count + 1})
             |> Repo.update()
 
-            :ok
+            {:ok, max_requests - count - 1}
           end
         end
     end
