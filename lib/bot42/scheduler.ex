@@ -1,8 +1,7 @@
 defmodule Bot42.DailyAgendaScheduler do
   use Cronex.Scheduler
 
-  # @daily_at_9am "0 9 * * *"
-  @daily_at_12_10 "10 12 * * *"
+  @daily_at_9am "40 12 * * *"
 
   def start_link do
     Cronex.Scheduler.start_link(name: __MODULE__)

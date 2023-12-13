@@ -8,6 +8,7 @@ defmodule Bot42.Application do
   @impl true
   def start(_type, _args) do
     children = [
+      Bot42.DailyAgendaScheduler,
       Bot42Web.Telemetry,
       Bot42.Repo,
       {DNSCluster, query: Application.get_env(:bot42, :dns_cluster_query) || :ignore},
@@ -18,8 +19,7 @@ defmodule Bot42.Application do
       # {Bot42.Worker, arg},
       # Start to serve requests, typically the last entry
       Bot42Web.Endpoint,
-      Bot42.TgHookHandler,
-      Bot42.DailyAgendaScheduler
+      Bot42.TgHookHandler
     ]
 
     # See https://hexdocs.pm/elixir/Supervisor.html
