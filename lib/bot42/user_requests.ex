@@ -87,12 +87,15 @@ defmodule Bot42.UserRequests do
 
   @spec get_user_id_by_username(username :: String.t()) :: {:ok, integer()} | {:error, any()}
   def get_user_id_by_username(username) do
-    # Логирование входящего значения username
-    IO.inspect(username, label: "Searched username")
+    # Преобразование username в строку
+    string_username = to_string(username)
+
+    # Логирование преобразованного значения username
+    IO.inspect(string_username, label: "Searched username")
 
     query =
       from(u in Bot42.UserRequests,
-        where: u.username == ^username,
+        where: u.username == ^string_username,
         select: u.user_id
       )
 
@@ -102,7 +105,7 @@ defmodule Bot42.UserRequests do
     case Repo.one(query) do
       nil ->
         # Логирование, если пользователь не найден
-        IO.inspect(username, label: "User not found for username")
+        IO.inspect(string_username, label: "User not found for username")
         {:error, "User not found"}
 
       user_id ->
