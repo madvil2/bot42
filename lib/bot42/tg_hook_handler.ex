@@ -4,7 +4,6 @@ defmodule Bot42.TgHookHandler do
   alias Bot42.ChatGpt
   alias Bot42.Telegram
   alias Bot42.DailyAgenda
-  alias Bot42.UserRequests
 
   @spec tg_admin_chat_id :: integer()
   defp tg_admin_chat_id do
@@ -50,9 +49,7 @@ defmodule Bot42.TgHookHandler do
   end
 
   @spec handle_update(Telegex.Type.Message.t()) :: :ok
-  defp handle_update(%{text: "/gpt" <> text, chat: chat, message_id: message_id}) do
-    user_id = chat.id
-
+  defp handle_update(%{text: "/gpt" <> text, message_id: message_id, user_id: user_id}) do
     case Bot42.UserRequests.check_and_update_requests(user_id) do
       {:ok, remaining_requests} ->
         gpt_query = text |> String.trim_leading("/gpt ") |> String.trim()
