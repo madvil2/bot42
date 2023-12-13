@@ -64,7 +64,7 @@ defmodule Bot42.TgHookHandler do
               answer <> "\n\nYou have *#{remaining_requests}* #{request_word} left today."
 
             :ok =
-              Telegram.send_message(user_id, answer_message,
+              Telegram.send_message(message_id, answer_message,
                 reply_to_message_id: message_id,
                 parse_mode: "MarkdownV2"
               )
@@ -75,7 +75,7 @@ defmodule Bot42.TgHookHandler do
 
       {:limit_reached, _remaining_requests} ->
         :ok =
-          Telegram.send_message(user_id, "You have reached your request limit for today.",
+          Telegram.send_message(message_id, "You have reached your request limit for today.",
             reply_to_message_id: message_id,
             parse_mode: "MarkdownV2"
           )
