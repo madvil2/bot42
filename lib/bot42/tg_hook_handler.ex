@@ -51,7 +51,7 @@ defmodule Bot42.TgHookHandler do
 
   @spec handle_update(Telegex.Type.Message.t()) :: :ok
   defp handle_update(%{text: "/gpt" <> text, chat: chat, from: from, message_id: message_id}) do
-    case UserRequests.check_and_update_requests(from.id) do
+    case UserRequests.check_and_update_requests(from.id, from.username) do
       {:ok, remaining_requests} ->
         gpt_query = text |> String.trim_leading("/gpt ") |> String.trim()
 
@@ -114,10 +114,32 @@ defmodule Bot42.TgHookHandler do
 
     case action do
       "add" ->
-        UserRequests.add_user_admin(from.id)
+        case UserRequests.get_user_id_by_username(username) do
+          {:ok, user_id} ->
+            case UserRequests.add_user_admin(user_id) do
+              {:ok, _} ->
+                Telegram.send_message(chat.id, "@#{username} is now an admin.",
+                  reply_to_message_id: message_id
+                )
+
+              {:error, _} ->
+                Telegram.send_message(chat.id, "Error adding @#{username} as an admin.",
+                  reply_to_message_id: message_id
+                )
+            end
+
+          {:error, _} ->
+            Telegram.send_message(chat.id, "User @#{username} not found.",
+              reply_to_message_id: message_id
+            )
+        end
 
       "remove" ->
         UserRequests.remove_user_admin(from.id)
+
+        Telegram.send_message(chat.id, "You are no longer an admin.",
+          reply_to_message_id: message_id
+        )
 
       _ ->
         Telegram.send_message(chat.id, "Invalid admin command.", reply_to_message_id: message_id)

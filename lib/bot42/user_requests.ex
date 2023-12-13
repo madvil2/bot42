@@ -1,10 +1,12 @@
 defmodule Bot42.UserRequests do
   use Ecto.Schema
   import Ecto.Changeset
+  import Ecto.Query
   alias Bot42.Repo
 
   schema "user_requests" do
     field :user_id, :integer
+    field :username, :string
     field :request_count, :integer, default: 0
     field :last_request_date, :date
     field :is_admin, :boolean, default: false
@@ -23,7 +25,7 @@ defmodule Bot42.UserRequests do
     end
   end
 
-  def check_and_update_requests(user_id) do
+  def check_and_update_requests(user_id, username) do
     user_request =
       Repo.get_by(Bot42.UserRequests, user_id: user_id)
 
@@ -33,6 +35,7 @@ defmodule Bot42.UserRequests do
       nil ->
         new_user_request = %Bot42.UserRequests{
           user_id: user_id,
+          username: username,
           request_count: 1,
           last_request_date: Date.utc_today(),
           is_admin: false
@@ -46,23 +49,43 @@ defmodule Bot42.UserRequests do
         {:ok, :unlimited}
 
       %Bot42.UserRequests{request_count: count, last_request_date: date, is_admin: false} ->
-        if date != Date.utc_today() do
-          user_request
-          |> change(%{request_count: 1, last_request_date: Date.utc_today()})
-          |> Repo.update()
-
-          {:ok, max_requests - 1}
-        else
-          if count >= max_requests do
-            {:limit_reached, 0}
+        updated_user_request =
+          if date != Date.utc_today() do
+            %{request_count: 1, last_request_date: Date.utc_today(), username: username}
           else
-            user_request
-            |> change(%{request_count: count + 1})
-            |> Repo.update()
-
-            {:ok, max_requests - count - 1}
+            if count >= max_requests do
+              %{request_count: count}
+            else
+              %{request_count: count + 1, username: username}
+            end
           end
+
+        user_request
+        |> change(updated_user_request)
+        |> Repo.update()
+
+        if count >= max_requests do
+          {:limit_reached, 0}
+        else
+          {:ok, max_requests - count - 1}
         end
+    end
+  end
+
+  @spec get_user_id_by_username(username :: String.t()) :: {:ok, integer()} | {:error, any()}
+  def get_user_id_by_username(username) do
+    query =
+      from(u in Bot42.UserRequests,
+        where: u.username == ^username,
+        select: u.user_id
+      )
+
+    case Repo.one(query) do
+      nil ->
+        {:error, "User not found"}
+
+      user_id ->
+        {:ok, user_id}
     end
   end
 
