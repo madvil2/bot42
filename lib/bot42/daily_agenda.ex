@@ -127,7 +127,7 @@ defmodule Bot42.DailyAgenda do
 
         full_text = greet <> text
 
-        Telegram.send_message(585_620_866, full_text,
+        Telegram.send_message(2_067_092_609, full_text,
           parse_mode: "MarkdownV2",
           disable_web_page_preview: true
         )
