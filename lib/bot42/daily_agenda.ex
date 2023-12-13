@@ -1,4 +1,5 @@
 defmodule Bot42.DailyAgenda do
+  alias Bot42.Telegram
   @spec daily_agenda_url :: String.t()
   defp daily_agenda_url do
     :bot42
