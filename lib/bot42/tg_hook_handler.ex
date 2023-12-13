@@ -59,7 +59,10 @@ defmodule Bot42.TgHookHandler do
 
         case ChatGpt.get_answer(gpt_query) do
           {:ok, answer} ->
-            answer_message = answer <> "\n\nYou have #{remaining_requests} requests left today."
+            request_word = if remaining_requests == 1, do: "request", else: "requests"
+
+            answer_message =
+              answer <> "\n\nYou have *#{remaining_requests}* #{request_word} left today."
 
             :ok =
               Telegram.send_message(user_id, answer_message,
