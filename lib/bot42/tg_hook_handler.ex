@@ -4,6 +4,7 @@ defmodule Bot42.TgHookHandler do
   alias Bot42.ChatGpt
   alias Bot42.Telegram
   alias Bot42.DailyAgenda
+  alias Bot42.UserRequests
 
   @spec tg_admin_chat_id :: integer()
   defp tg_admin_chat_id do
@@ -48,17 +49,32 @@ defmodule Bot42.TgHookHandler do
     end)
   end
 
+  @spec handle_update(Telegex.Type.Message.t()) :: :ok
   defp handle_update(%{text: "/gpt" <> text, chat: chat, message_id: message_id}) do
-    with gpt_query <- text |> String.trim_leading("/gpt ") |> String.trim(),
-         {:ok, answer} <- ChatGpt.get_answer(gpt_query) do
-      :ok =
-        Telegram.send_message(chat.id, answer,
-          reply_to_message_id: message_id,
-          parse_mode: "MarkdownV2"
-        )
-    end
+    user_id = chat.id
 
-    :ok
+    case UserRequests.check_and_update_requests(user_id) do
+      :ok ->
+        gpt_query = text |> String.trim_leading("/gpt ") |> String.trim()
+
+        case ChatGpt.get_answer(gpt_query) do
+          {:ok, answer} ->
+            :ok =
+              Telegram.send_message(user_id, answer,
+                reply_to_message_id: message_id,
+                parse_mode: "MarkdownV2"
+              )
+
+          {:error, _} ->
+            :error
+        end
+
+      :limit_reached ->
+        :ok =
+          Telegram.send_message(user_id, "You have reached your request limit for today.",
+            reply_to_message_id: message_id
+          )
+    end
   end
 
   defp handle_update(%{text: "/today" <> _text, chat: chat, message_id: message_id}) do
@@ -74,10 +90,14 @@ defmodule Bot42.TgHookHandler do
     :ok
   end
 
-  defp handle_update(%{text: "/help" <> _text, chat: chat}) do
-    help_message = "HELP: /help for help"
+  defp handle_update(%{text: "/help" <> _text, chat: chat, message_id: message_id}) do
+    help_message =
+      "Welcome to the Bot Help Menu!\nHere are the commands you can use:\n\n/today - Get the list of events from the 42 Berlin school calendar for today. Stay updated with the latest happenings!\n\n/gpt <text> - Ask any question to the ChatGPT. Just type your question after the command and get insights in no time.\n\nIf you have any questions or suggestions, feel free to reach out to me directly at @madvil2. I'm here to assist you!"
 
-    Telegram.send_message(chat.id, help_message)
+    Telegram.send_message(chat.id, help_message,
+      parse_mode: "MarkdownV2",
+      reply_to_message_id: message_id
+    )
   end
 
   defp handle_update(update) do
