@@ -16,6 +16,8 @@ config :bot42, Bot42.Repo,
   pool: Ecto.Adapters.SQL.Sandbox,
   pool_size: 10
 
+config :bot42, Oban, testing: :inline
+
 # We don't run a server during test. If one is required,
 # you can enable the server option below.
 config :bot42, Bot42Web.Endpoint,

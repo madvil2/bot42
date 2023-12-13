@@ -8,9 +8,9 @@ defmodule Bot42.Application do
   @impl true
   def start(_type, _args) do
     children = [
-      Bot42.DailyAgendaScheduler,
       Bot42Web.Telemetry,
       Bot42.Repo,
+      {Oban, Application.fetch_env!(:bot42, Oban)},
       {DNSCluster, query: Application.get_env(:bot42, :dns_cluster_query) || :ignore},
       {Phoenix.PubSub, name: Bot42.PubSub},
       # Start the Finch HTTP client for sending emails

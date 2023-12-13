@@ -31,6 +31,17 @@ config :bot42, Bot42Web.Endpoint,
 # at the `config/runtime.exs`.
 config :bot42, Bot42.Mailer, adapter: Swoosh.Adapters.Local
 
+config :bot42, Oban,
+  repo: Bot42.Repo,
+  plugins: [
+    Oban.Plugins.Pruner,
+    {Oban.Plugins.Cron,
+     crontab: [
+       {"* * * * *", Bot42.DailyAgendaWorker}
+     ]}
+  ],
+  queues: [default: 10]
+
 # Configure esbuild (the version is required)
 config :esbuild,
   version: "0.17.11",
