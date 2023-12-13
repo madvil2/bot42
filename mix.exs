@@ -57,7 +57,8 @@ defmodule Bot42.MixProject do
       {:multipart, "~> 0.4.0"},
       {:telegex, "~> 1.3.2"},
       {:httpoison, "~> 2.2.1"},
-      {:icalendar, "~> 1.1.2"}
+      {:icalendar, "~> 1.1.2"},
+      {:quantum, "~> 3.4.0"}
     ]
   end
 

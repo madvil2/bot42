@@ -31,6 +31,11 @@ config :bot42, Bot42Web.Endpoint,
 # at the `config/runtime.exs`.
 config :bot42, Bot42.Mailer, adapter: Swoosh.Adapters.Local
 
+config :bot42, Bot42.Scheduler,
+  jobs: [
+    {"@daily 12:00", {Bot42.DailyAgenda, :send_daily_events, []}}
+  ]
+
 # Configure esbuild (the version is required)
 config :esbuild,
   version: "0.17.11",

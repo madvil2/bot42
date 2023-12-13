@@ -98,7 +98,8 @@ defmodule Bot42.DailyAgenda do
   @spec format_next_events([%ICalendar.Event{}] | []) :: String.t()
   defp format_next_events(events) do
     if Enum.empty?(events) do
-      "And there are no upcoming events either 🙁\n\n"
+      "📆 *Today's Events*\n\n" <>
+        "Unfortunately, there are no events scheduled for today 😔\n\n"
     else
       "🔜 *However, here are the next 3 events:*\n\n" <>
         Enum.map_join(events, "\n\n", fn event ->
@@ -114,6 +115,51 @@ defmodule Bot42.DailyAgenda do
               do: "ℹ️ *Description:* #{String.slice(event.description, 0, 150)}...\n",
               else: ""
         end)
+    end
+  end
+
+  def send_daily_events do
+    case formated_today_events() do
+      {:ok, events} ->
+        send_message("585620866", format_events_for_chat(events))
+
+      _ ->
+        :error
+    end
+  end
+
+  @spec format_events_for_chat([%ICalendar.Event{}] | []) :: String.t()
+  defp format_events_for_chat(events) do
+    case events do
+      [] ->
+        next_events =
+          events_from_calendar()
+          |> case do
+            {:ok, events} -> next_three_events(events)
+            _ -> []
+          end
+
+        events_text = if Enum.empty?(next_events), do: "", else: format_next_events(next_events)
+
+        "📆 *Today's Events*\n\n" <>
+          "Unfortunately, there are no events scheduled for today 😔\n\n" <>
+          events_text
+
+      events ->
+        "📆 *Today's Events*\n\n" <>
+          Enum.map_join(events, "\n\n", fn event ->
+            start_time = Calendar.strftime(event.dtstart, "%H:%M")
+            end_time = Calendar.strftime(event.dtend, "%H:%M")
+            date = Calendar.strftime(event.dtstart, "%Y-%m-%d")
+
+            "📌 *#{event.summary}*\n\n" <>
+              "🗓️ *Date:* #{date}\n" <>
+              "🕒 *Time:* #{start_time} - #{end_time}\n" <>
+              if(event.location != nil, do: "📍 *Location:* #{event.location}\n", else: "") <>
+              if event.description != nil,
+                do: "ℹ️ *Description:* #{String.slice(event.description, 0, 150)}...\n",
+                else: ""
+          end)
     end
   end
 end
