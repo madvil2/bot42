@@ -82,6 +82,8 @@ defmodule Bot42.TgHookHandler do
   end
 
   defp handle_update(%{text: "/today" <> _text, chat: chat, message_id: message_id}) do
+    IO.inspect(chat.id, "id")
+
     with {:ok, events_message} <- DailyAgenda.formated_today_events() do
       :ok =
         Telegram.send_message(chat.id, events_message,
@@ -107,6 +109,10 @@ defmodule Bot42.TgHookHandler do
         reply_to_message_id: message_id
       )
     end
+  end
+
+  defp handle_update(update) do
+    IO.inspect(update, label: "Unknown update")
   end
 
   defp handle_admin_command(command_text, chat, from, message_id) do
@@ -155,9 +161,5 @@ defmodule Bot42.TgHookHandler do
           reply_to_message_id: message_id
         )
     end
-  end
-
-  defp handle_update(update) do
-    IO.inspect(update, label: "Unknown update")
   end
 end
