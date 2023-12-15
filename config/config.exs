@@ -37,7 +37,7 @@ config :bot42, Oban,
     Oban.Plugins.Pruner,
     {Oban.Plugins.Cron,
      crontab: [
-       {"0 9 * * *", Bot42.DailyAgendaWorker}
+       {"0 9 * * 1-5", Bot42.DailyAgendaWorker}
      ]}
   ],
   queues: [daily_agenda: 10]
