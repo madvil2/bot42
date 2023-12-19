@@ -83,6 +83,7 @@ defmodule Bot42.TgHookHandler do
     end
   end
 
+  @spec handle_update(Telegex.Type.Message.t()) :: :ok
   defp handle_update(%{text: "/today" <> _text, chat: chat, message_id: message_id}) do
     with {:ok, events_message} <- DailyAgenda.formated_today_events() do
       :ok =
@@ -111,6 +112,7 @@ defmodule Bot42.TgHookHandler do
     end
   end
 
+  @spec handle_update(Telegex.Type.Message.t()) :: :ok
   defp handle_update(%{text: "/help" <> _text, chat: chat, message_id: message_id}) do
     help_message =
       "Welcome to the Bot Help Menu!\nHere are the commands you can use:\n\n/today - Get the list of events from the 42 Berlin school calendar for today. Stay updated with the latest happenings!\n\n@school42bot <text> - Ask any question to the ChatGPT. Just mention @school42bot followed by your question and get insights in no time. The mention will be replaced with 'ChatGPT' when processing your request.\n\nIf you have any questions or suggestions, feel free to reach out to me directly at @madvil2. I'm here to assist you!"
