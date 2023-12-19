@@ -146,4 +146,11 @@ defmodule Bot42.UserRequests do
         {:ok, "User is now removed from admins"}
     end
   end
+
+  def reset_daily_request_counts do
+    from(u in Bot42.UserRequests)
+    |> Repo.update_all(set: [request_count: 0])
+
+    IO.puts("All user request counts have been reset.")
+  end
 end
