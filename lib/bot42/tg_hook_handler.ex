@@ -50,11 +50,16 @@ defmodule Bot42.TgHookHandler do
   end
 
   @spec handle_update(Telegex.Type.Message.t()) :: :ok
-  defp handle_update(%{text: "/gpt" <> text, chat: chat, from: from, message_id: message_id}) do
+  defp handle_update(%{
+         text: "@school42bot" <> text,
+         chat: chat,
+         from: from,
+         message_id: message_id
+       }) do
+    gpt_query = String.replace(text, "@school42bot", "ChatGPT")
+
     case UserRequests.check_and_update_requests(from.id, from.username) do
       {:ok, remaining_requests} ->
-        gpt_query = text |> String.trim_leading("/gpt ") |> String.trim()
-
         case ChatGpt.get_answer(gpt_query) do
           {:ok, answer} ->
             request_word = if remaining_requests == 1, do: "request", else: "requests"
