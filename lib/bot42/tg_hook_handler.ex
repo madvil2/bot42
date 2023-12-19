@@ -50,40 +50,37 @@ defmodule Bot42.TgHookHandler do
   end
 
   @spec handle_update(Telegex.Type.Message.t()) :: :ok
-  defp handle_update(%{text: text, chat: chat, from: from, message_id: message_id}) do
-    if String.contains?(text, "@school42bot") do
-      case UserRequests.check_and_update_requests(from.id, from.username) do
-        {:ok, remaining_requests} ->
-          gpt_query = text |> String.replace("@school42bot", "ChatGPT") |> String.trim()
+  defp handle_update(%{text: "/gpt" <> text, chat: chat, from: from, message_id: message_id}) do
+    case UserRequests.check_and_update_requests(from.id, from.username) do
+      {:ok, remaining_requests} ->
+        gpt_query = text |> String.trim_leading("/gpt ") |> String.trim()
 
-          case ChatGpt.get_answer(gpt_query) do
-            {:ok, answer} ->
-              request_word = if remaining_requests == 1, do: "request", else: "requests"
+        case ChatGpt.get_answer(gpt_query) do
+          {:ok, answer} ->
+            request_word = if remaining_requests == 1, do: "request", else: "requests"
 
-              answer_message =
-                answer <> "\n\nYou have *#{remaining_requests}* #{request_word} left today."
+            answer_message =
+              answer <> "\n\nYou have *#{remaining_requests}* #{request_word} left today."
 
-              :ok =
-                Telegram.send_message(chat.id, answer_message,
-                  reply_to_message_id: message_id,
-                  parse_mode: "MarkdownV2"
-                )
+            :ok =
+              Telegram.send_message(chat.id, answer_message,
+                reply_to_message_id: message_id,
+                parse_mode: "MarkdownV2"
+              )
 
-            {:error, _} ->
-              :error
-          end
+          {:error, _} ->
+            :error
+        end
 
-        {:limit_reached, _remaining_requests} ->
-          :ok =
-            Telegram.send_message(chat.id, "You have reached your request limit for today.",
-              reply_to_message_id: message_id,
-              parse_mode: "MarkdownV2"
-            )
-      end
+      {:limit_reached, _remaining_requests} ->
+        :ok =
+          Telegram.send_message(chat.id, "You have reached your request limit for today.",
+            reply_to_message_id: message_id,
+            parse_mode: "MarkdownV2"
+          )
     end
   end
 
-  @spec handle_update(Telegex.Type.Message.t()) :: :ok
   defp handle_update(%{text: "/today" <> _text, chat: chat, message_id: message_id}) do
     with {:ok, events_message} <- DailyAgenda.formated_today_events() do
       :ok =
@@ -95,6 +92,21 @@ defmodule Bot42.TgHookHandler do
     end
 
     :ok
+  end
+
+  @spec handle_update(Telegex.Type.Message.t()) :: :ok
+  defp handle_update(%{text: "/admin " <> rest, chat: chat, from: from, message_id: message_id}) do
+    admin_chat_id = tg_admin_chat_id()
+
+    if UserRequests.is_user_admin(from.id) or admin_chat_id == chat.id do
+      handle_admin_command(rest, chat, from, message_id)
+    else
+      Telegram.send_message(
+        chat.id,
+        "Only admins can use admin commands, or use in the admin chat.",
+        reply_to_message_id: message_id
+      )
+    end
   end
 
   @spec handle_update(Telegex.Type.Message.t()) :: :ok
@@ -110,5 +122,53 @@ defmodule Bot42.TgHookHandler do
 
   defp handle_update(update) do
     IO.inspect(update, label: "Unknown update")
+  end
+
+  defp handle_admin_command(command_text, chat, from, message_id) do
+    [action, username] = String.split(command_text)
+    username = String.replace(username, ~r/^@/, "")
+
+    case action do
+      "add" ->
+        case UserRequests.get_user_id_by_username(username) do
+          {:ok, user_id} ->
+            case UserRequests.add_user_admin(user_id) do
+              {:ok, _} ->
+                Telegram.send_message(chat.id, "@#{username} is now an admin.",
+                  parse_mode: "MarkdownV2",
+                  reply_to_message_id: message_id
+                )
+            end
+
+          {:error, _} ->
+            Telegram.send_message(chat.id, "User @#{username} not found.",
+              parse_mode: "MarkdownV2",
+              reply_to_message_id: message_id
+            )
+        end
+
+      "remove" ->
+        case UserRequests.get_user_id_by_username(username) do
+          {:ok, user_id} ->
+            UserRequests.remove_user_admin(user_id)
+
+            Telegram.send_message(chat.id, "User @#{username} is no longer an admin.",
+              parse_mode: "MarkdownV2",
+              reply_to_message_id: message_id
+            )
+
+          {:error, _} ->
+            Telegram.send_message(chat.id, "User @#{username} not found.",
+              parse_mode: "MarkdownV2",
+              reply_to_message_id: message_id
+            )
+        end
+
+      _ ->
+        Telegram.send_message(chat.id, "Invalid admin command.",
+          parse_mode: "MarkdownV2",
+          reply_to_message_id: message_id
+        )
+    end
   end
 end
