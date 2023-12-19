@@ -50,34 +50,36 @@ defmodule Bot42.TgHookHandler do
   end
 
   @spec handle_update(Telegex.Type.Message.t()) :: :ok
-  defp handle_update(%{text: "/gpt" <> text, chat: chat, from: from, message_id: message_id}) do
-    case UserRequests.check_and_update_requests(from.id, from.username) do
-      {:ok, remaining_requests} ->
-        gpt_query = text |> String.trim_leading("/gpt ") |> String.trim()
+  defp handle_update(%{text: text, chat: chat, from: from, message_id: message_id}) do
+    if String.contains?(text, "@school42bot") do
+      case UserRequests.check_and_update_requests(from.id, from.username) do
+        {:ok, remaining_requests} ->
+          gpt_query = text |> String.replace("@school42bot", "ChatGPT") |> String.trim()
 
-        case ChatGpt.get_answer(gpt_query) do
-          {:ok, answer} ->
-            request_word = if remaining_requests == 1, do: "request", else: "requests"
+          case ChatGpt.get_answer(gpt_query) do
+            {:ok, answer} ->
+              request_word = if remaining_requests == 1, do: "request", else: "requests"
 
-            answer_message =
-              answer <> "\n\nYou have *#{remaining_requests}* #{request_word} left today."
+              answer_message =
+                answer <> "\n\nYou have *#{remaining_requests}* #{request_word} left today."
 
-            :ok =
-              Telegram.send_message(chat.id, answer_message,
-                reply_to_message_id: message_id,
-                parse_mode: "MarkdownV2"
-              )
+              :ok =
+                Telegram.send_message(chat.id, answer_message,
+                  reply_to_message_id: message_id,
+                  parse_mode: "MarkdownV2"
+                )
 
-          {:error, _} ->
-            :error
-        end
+            {:error, _} ->
+              :error
+          end
 
-      {:limit_reached, _remaining_requests} ->
-        :ok =
-          Telegram.send_message(chat.id, "You have reached your request limit for today.",
-            reply_to_message_id: message_id,
-            parse_mode: "MarkdownV2"
-          )
+        {:limit_reached, _remaining_requests} ->
+          :ok =
+            Telegram.send_message(chat.id, "You have reached your request limit for today.",
+              reply_to_message_id: message_id,
+              parse_mode: "MarkdownV2"
+            )
+      end
     end
   end
 
