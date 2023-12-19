@@ -49,6 +49,45 @@ defmodule Bot42.TgHookHandler do
     end)
   end
 
+  defp handle_update(%{text: "/today" <> _text, chat: chat, message_id: message_id}) do
+    with {:ok, events_message} <- DailyAgenda.formated_today_events() do
+      :ok =
+        Telegram.send_message(chat.id, events_message,
+          parse_mode: "MarkdownV2",
+          disable_web_page_preview: true,
+          reply_to_message_id: message_id
+        )
+    end
+
+    :ok
+  end
+
+  @spec handle_update(Telegex.Type.Message.t()) :: :ok
+  defp handle_update(%{text: "/admin " <> rest, chat: chat, from: from, message_id: message_id}) do
+    admin_chat_id = tg_admin_chat_id()
+
+    if UserRequests.is_user_admin(from.id) or admin_chat_id == chat.id do
+      handle_admin_command(rest, chat, from, message_id)
+    else
+      Telegram.send_message(
+        chat.id,
+        "Only admins can use admin commands, or use in the admin chat.",
+        reply_to_message_id: message_id
+      )
+    end
+  end
+
+  @spec handle_update(Telegex.Type.Message.t()) :: :ok
+  defp handle_update(%{text: "/help" <> _text, chat: chat, message_id: message_id}) do
+    help_message =
+      "Welcome to the Bot Help Menu!\nHere are the commands you can use:\n\n/today - Get the list of events from the 42 Berlin school calendar for today. Stay updated with the latest happenings!\n\n@school42bot <text> - Ask any question to the ChatGPT. Just mention @school42bot followed by your question and get insights in no time. The mention will be replaced with 'ChatGPT' when processing your request.\n\nIf you have any questions or suggestions, feel free to reach out to me directly at @madvil2. I'm here to assist you!"
+
+    Telegram.send_message(chat.id, help_message,
+      parse_mode: "MarkdownV2",
+      reply_to_message_id: message_id
+    )
+  end
+
   @spec handle_update(Telegex.Type.Message.t()) :: :ok
   defp handle_update(%{
          text: text,
@@ -88,45 +127,6 @@ defmodule Bot42.TgHookHandler do
     else
       :ok
     end
-  end
-
-  defp handle_update(%{text: "/today" <> _text, chat: chat, message_id: message_id}) do
-    with {:ok, events_message} <- DailyAgenda.formated_today_events() do
-      :ok =
-        Telegram.send_message(chat.id, events_message,
-          parse_mode: "MarkdownV2",
-          disable_web_page_preview: true,
-          reply_to_message_id: message_id
-        )
-    end
-
-    :ok
-  end
-
-  @spec handle_update(Telegex.Type.Message.t()) :: :ok
-  defp handle_update(%{text: "/admin " <> rest, chat: chat, from: from, message_id: message_id}) do
-    admin_chat_id = tg_admin_chat_id()
-
-    if UserRequests.is_user_admin(from.id) or admin_chat_id == chat.id do
-      handle_admin_command(rest, chat, from, message_id)
-    else
-      Telegram.send_message(
-        chat.id,
-        "Only admins can use admin commands, or use in the admin chat.",
-        reply_to_message_id: message_id
-      )
-    end
-  end
-
-  @spec handle_update(Telegex.Type.Message.t()) :: :ok
-  defp handle_update(%{text: "/help" <> _text, chat: chat, message_id: message_id}) do
-    help_message =
-      "Welcome to the Bot Help Menu!\nHere are the commands you can use:\n\n/today - Get the list of events from the 42 Berlin school calendar for today. Stay updated with the latest happenings!\n\n@school42bot <text> - Ask any question to the ChatGPT. Just mention @school42bot followed by your question and get insights in no time. The mention will be replaced with 'ChatGPT' when processing your request.\n\nIf you have any questions or suggestions, feel free to reach out to me directly at @madvil2. I'm here to assist you!"
-
-    Telegram.send_message(chat.id, help_message,
-      parse_mode: "MarkdownV2",
-      reply_to_message_id: message_id
-    )
   end
 
   defp handle_update(update) do
