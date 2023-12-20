@@ -93,10 +93,17 @@ defmodule Bot42.TgHookHandler do
          text: text,
          chat: chat,
          from: from,
-         message_id: message_id
+         message_id: message_id,
+         reply_to_message: reply_to_message
        }) do
-    if String.contains?(text, "@school42bot") do
-      gpt_query = String.replace(text, "@school42bot", "ChatGPT")
+    bot_username = "@school42bot"
+
+    is_mention_or_reply =
+      (text != nil and String.contains?(text, bot_username)) or
+        (reply_to_message != nil and reply_to_message.from.username == bot_username)
+
+    if is_mention_or_reply do
+      gpt_query = String.replace(text, bot_username, "ChatGPT")
 
       case UserRequests.check_and_update_requests(from.id, from.username) do
         {:ok, remaining_requests} ->
