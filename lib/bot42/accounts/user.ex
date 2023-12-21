@@ -8,6 +8,9 @@ defmodule Bot42.Accounts.User do
     field :password, :string, virtual: true, redact: true
     field :hashed_password, :string, redact: true
     field :confirmed_at, :naive_datetime
+    field :request_count, :integer, default: 0
+    field :last_request_date, :date
+    field :is_admin, :boolean, default: false
 
     timestamps(type: :utc_datetime)
   end

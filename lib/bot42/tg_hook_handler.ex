@@ -98,14 +98,6 @@ defmodule Bot42.TgHookHandler do
        }) do
     bot_username = "@school42bot"
 
-    Logger.info("Received text: #{inspect(text)}")
-
-    Logger.info(
-      "Reply to message from: #{inspect(reply_to_message && reply_to_message.from.username)}"
-    )
-
-    Logger.info("Bot username: #{bot_username}")
-
     is_mention_or_reply =
       (text != nil and String.contains?(text, bot_username)) or
         (reply_to_message != nil and reply_to_message.from.username == bot_username)

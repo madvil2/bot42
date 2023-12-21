@@ -4,19 +4,23 @@ defmodule Bot42.UserRequests do
   import Ecto.Query
   alias Bot42.Repo
 
-  schema "user_requests" do
-    field :user_id, :integer
-    field :username, :string
+  schema "users" do
+    field :email, :string
+    field :tg_username, :string
+    field :password, :string, virtual: true, redact: true
+    field :hashed_password, :string, redact: true
+    field :confirmed_at, :naive_datetime
     field :request_count, :integer, default: 0
     field :last_request_date, :date
     field :is_admin, :boolean, default: false
-    timestamps()
+
+    timestamps(type: :utc_datetime)
   end
 
-  def is_user_admin(user_id) do
-    user_request = Repo.get_by(Bot42.UserRequests, user_id: user_id)
+  def is_user_admin(tg_username) do
+    user = Repo.get_by(Bot42.UserRequests, tg_username: tg_username)
 
-    case user_request do
+    case user do
       nil ->
         false
 
@@ -25,56 +29,41 @@ defmodule Bot42.UserRequests do
     end
   end
 
-  def check_and_update_requests(user_id, username) do
-    # Логируем входящие значения user_id и username
-    IO.inspect(user_id, label: "user_id")
-    IO.inspect(username, label: "username")
-
-    user_request =
-      Repo.get_by(Bot42.UserRequests, user_id: user_id)
+  def check_and_update_requests(tg_username) do
+    user =
+      Repo.get_by(Bot42.UserRequests, tg_username: tg_username)
 
     max_requests = 10
 
-    case user_request do
+    case user do
       nil ->
-        # Логируем, когда пользователь не найден в базе
-        IO.inspect({user_id, username}, label: "New user request")
-
-        new_user_request = %Bot42.UserRequests{
-          user_id: user_id,
-          username: username,
+        new_user = %Bot42.UserRequests{
+          tg_username: tg_username,
           request_count: 1,
           last_request_date: Date.utc_today(),
           is_admin: false
         }
 
-        Repo.insert(new_user_request)
-
+        Repo.insert(new_user)
         {:ok, max_requests - 1}
 
       %Bot42.UserRequests{request_count: count, last_request_date: date, is_admin: true} ->
-        # Логируем для администратора
-        IO.inspect({user_id, username, count, date, true}, label: "Admin user request")
-
         {:ok, :unlimited}
 
       %Bot42.UserRequests{request_count: count, last_request_date: date, is_admin: false} ->
-        # Логируем для обычного пользователя
-        IO.inspect({user_id, username, count, date, false}, label: "Regular user request")
-
-        updated_user_request =
+        updated_user =
           if date != Date.utc_today() do
-            %{request_count: 1, last_request_date: Date.utc_today(), username: username}
+            %{request_count: 1, last_request_date: Date.utc_today()}
           else
             if count >= max_requests do
               %{request_count: count}
             else
-              %{request_count: count + 1, username: username}
+              %{request_count: count + 1}
             end
           end
 
-        user_request
-        |> change(updated_user_request)
+        user
+        |> change(updated_user)
         |> Repo.update()
 
         if count >= max_requests do
@@ -85,45 +74,31 @@ defmodule Bot42.UserRequests do
     end
   end
 
-  @spec get_user_id_by_username(username :: String.t()) :: {:ok, integer()} | {:error, any()}
-  def get_user_id_by_username(username) do
-    # Преобразование username в строку
-    string_username = to_string(username)
-
-    # Логирование преобразованного значения username
-    IO.inspect(string_username, label: "Searched username")
-
+  def get_user_id_by_username(tg_username) do
     query =
       from(u in Bot42.UserRequests,
-        where: u.username == ^string_username,
-        select: u.user_id
+        where: u.tg_username == ^tg_username,
+        select: u.tg_username
       )
-
-    # Логирование сформированного запроса
-    IO.inspect(query, label: "Database query")
 
     case Repo.one(query) do
       nil ->
-        # Логирование, если пользователь не найден
-        IO.inspect(string_username, label: "User not found for username")
         {:error, "User not found"}
 
-      user_id ->
-        # Логирование найденного user_id
-        IO.inspect(user_id, label: "Found user_id")
-        {:ok, user_id}
+      user_tg_username ->
+        {:ok, user_tg_username}
     end
   end
 
-  def add_user_admin(user_id) do
-    user_request = Repo.get_by(Bot42.UserRequests, user_id: user_id)
+  def add_user_admin(tg_username) do
+    user = Repo.get_by(Bot42.UserRequests, tg_username: tg_username)
 
-    case user_request do
+    case user do
       nil ->
         {:error, "User not found"}
 
       %Bot42.UserRequests{} ->
-        user_request
+        user
         |> change(%{is_admin: true})
         |> Repo.update()
 
@@ -131,15 +106,15 @@ defmodule Bot42.UserRequests do
     end
   end
 
-  def remove_user_admin(user_id) do
-    user_request = Repo.get_by(Bot42.UserRequests, user_id: user_id)
+  def remove_user_admin(tg_username) do
+    user = Repo.get_by(Bot42.UserRequests, tg_username: tg_username)
 
-    case user_request do
+    case user do
       nil ->
         {:error, "User not found"}
 
       %Bot42.UserRequests{} ->
-        user_request
+        user
         |> change(%{is_admin: false})
         |> Repo.update()
 
@@ -148,9 +123,7 @@ defmodule Bot42.UserRequests do
   end
 
   def reset_daily_request_counts do
-    from(u in Bot42.UserRequests)
-    |> Repo.update_all(set: [request_count: 0])
-
+    Repo.update_all(Bot42.UserRequests, set: [request_count: 0])
     IO.puts("All user request counts have been reset.")
   end
 end
