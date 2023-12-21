@@ -142,18 +142,19 @@ defmodule Bot42.TgHookHandler do
 
   defp handle_admin_command(command_text, chat, from, message_id) do
     [action, tg_username] = String.split(command_text)
+    tg_username = String.replace(tg_username, ~r/^@/, "")
 
     case action do
       "add" ->
         case UserRequests.add_user_admin(tg_username) do
           {:ok, _} ->
-            Telegram.send_message(chat.id, "#{tg_username} is now an admin.",
+            Telegram.send_message(chat.id, "@#{tg_username} is now an admin.",
               parse_mode: "MarkdownV2",
               reply_to_message_id: message_id
             )
 
           {:error, _} ->
-            Telegram.send_message(chat.id, "User #{tg_username} not found.",
+            Telegram.send_message(chat.id, "User @#{tg_username} not found.",
               parse_mode: "MarkdownV2",
               reply_to_message_id: message_id
             )
@@ -162,13 +163,13 @@ defmodule Bot42.TgHookHandler do
       "remove" ->
         case UserRequests.remove_user_admin(tg_username) do
           {:ok, _} ->
-            Telegram.send_message(chat.id, "User #{tg_username} is no longer an admin.",
+            Telegram.send_message(chat.id, "User @#{tg_username} is no longer an admin.",
               parse_mode: "MarkdownV2",
               reply_to_message_id: message_id
             )
 
           {:error, _} ->
-            Telegram.send_message(chat.id, "User #{tg_username} not found.",
+            Telegram.send_message(chat.id, "User @#{tg_username} not found.",
               parse_mode: "MarkdownV2",
               reply_to_message_id: message_id
             )
