@@ -141,40 +141,34 @@ defmodule Bot42.TgHookHandler do
   end
 
   defp handle_admin_command(command_text, chat, from, message_id) do
-    [action, username] = String.split(command_text)
-    username = String.replace(username, ~r/^@/, "")
+    [action, tg_username] = String.split(command_text)
 
     case action do
       "add" ->
-        case UserRequests.get_user_id_by_username(username) do
-          {:ok, user_id} ->
-            case UserRequests.add_user_admin(user_id) do
-              {:ok, _} ->
-                Telegram.send_message(chat.id, "@#{username} is now an admin.",
-                  parse_mode: "MarkdownV2",
-                  reply_to_message_id: message_id
-                )
-            end
+        case UserRequests.add_user_admin(tg_username) do
+          {:ok, _} ->
+            Telegram.send_message(chat.id, "@#{tg_username} is now an admin.",
+              parse_mode: "MarkdownV2",
+              reply_to_message_id: message_id
+            )
 
           {:error, _} ->
-            Telegram.send_message(chat.id, "User @#{username} not found.",
+            Telegram.send_message(chat.id, "User @#{tg_username} not found.",
               parse_mode: "MarkdownV2",
               reply_to_message_id: message_id
             )
         end
 
       "remove" ->
-        case UserRequests.get_user_id_by_username(username) do
-          {:ok, user_id} ->
-            UserRequests.remove_user_admin(user_id)
-
-            Telegram.send_message(chat.id, "User @#{username} is no longer an admin.",
+        case UserRequests.remove_user_admin(tg_username) do
+          {:ok, _} ->
+            Telegram.send_message(chat.id, "User @#{tg_username} is no longer an admin.",
               parse_mode: "MarkdownV2",
               reply_to_message_id: message_id
             )
 
           {:error, _} ->
-            Telegram.send_message(chat.id, "User @#{username} not found.",
+            Telegram.send_message(chat.id, "User @#{tg_username} not found.",
               parse_mode: "MarkdownV2",
               reply_to_message_id: message_id
             )
