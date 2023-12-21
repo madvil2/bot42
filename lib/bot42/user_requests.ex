@@ -1,7 +1,6 @@
 defmodule Bot42.UserRequests do
   use Ecto.Schema
   import Ecto.Changeset
-  import Ecto.Query
   alias Bot42.Repo
 
   schema "users" do
@@ -13,6 +12,7 @@ defmodule Bot42.UserRequests do
     field :request_count, :integer, default: 0
     field :last_request_date, :date
     field :is_admin, :boolean, default: false
+    field :user_id, :integer
 
     timestamps(type: :utc_datetime)
   end
@@ -29,41 +29,49 @@ defmodule Bot42.UserRequests do
     end
   end
 
-  def check_and_update_requests(tg_username) do
-    user =
-      Repo.get_by(Bot42.UserRequests, tg_username: tg_username)
+  def check_and_update_requests(user_id, username) do
+    user_request =
+      Repo.get_by(Bot42.UserRequests, user_id: user_id)
 
     max_requests = 10
 
-    case user do
+    case user_request do
       nil ->
-        new_user = %Bot42.UserRequests{
-          tg_username: tg_username,
+        new_user_request = %Bot42.UserRequests{
+          user_id: user_id,
+          tg_username: username,
           request_count: 1,
           last_request_date: Date.utc_today(),
           is_admin: false
         }
 
-        Repo.insert(new_user)
+        Repo.insert(new_user_request)
+
         {:ok, max_requests - 1}
 
       %Bot42.UserRequests{request_count: count, last_request_date: date, is_admin: true} ->
+        # Логируем для администратора
+        IO.inspect({user_id, username, count, date, true}, label: "Admin user request")
+
         {:ok, :unlimited}
 
       %Bot42.UserRequests{request_count: count, last_request_date: date, is_admin: false} ->
-        updated_user =
+        # Логируем для обычного пользователя
+        IO.inspect({user_id, username, count, date, false}, label: "Regular user request")
+
+        updated_user_request =
           if date != Date.utc_today() do
-            %{request_count: 1, last_request_date: Date.utc_today()}
+            %{request_count: 1, last_request_date: Date.utc_today(), username: username}
           else
             if count >= max_requests do
               %{request_count: count}
             else
-              %{request_count: count + 1}
+              %{request_count: count + 1, username: username}
             end
           end
 
-        user
-        |> change(updated_user)
+        user_request
+        |> change(updated_user_request)
         |> Repo.update()
 
         if count >= max_requests do
