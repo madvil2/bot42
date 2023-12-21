@@ -61,12 +61,12 @@ defmodule Bot42.UserRequests do
 
         updated_user_request =
           if date != Date.utc_today() do
-            %{request_count: 1, last_request_date: Date.utc_today(), username: username}
+            %{request_count: 1, last_request_date: Date.utc_today(), tg_username: username}
           else
             if count >= max_requests do
               %{request_count: count}
             else
-              %{request_count: count + 1, username: username}
+              %{request_count: count + 1, tg_username: username}
             end
           end
 
