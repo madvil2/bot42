@@ -66,7 +66,7 @@ defmodule Bot42.TgHookHandler do
   defp handle_update(%{text: "/admin " <> rest, chat: chat, from: from, message_id: message_id}) do
     admin_chat_id = tg_admin_chat_id()
 
-    if UserRequests.is_user_admin(from.id) or admin_chat_id == chat.id do
+    if UserRequests.is_user_admin(from.username) or admin_chat_id == chat.id do
       handle_admin_command(rest, chat, from, message_id)
     else
       Telegram.send_message(

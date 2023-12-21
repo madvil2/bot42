@@ -74,22 +74,6 @@ defmodule Bot42.UserRequests do
     end
   end
 
-  def get_user_id_by_username(tg_username) do
-    query =
-      from(u in Bot42.UserRequests,
-        where: u.tg_username == ^tg_username,
-        select: u.tg_username
-      )
-
-    case Repo.one(query) do
-      nil ->
-        {:error, "User not found"}
-
-      user_tg_username ->
-        {:ok, user_tg_username}
-    end
-  end
-
   def add_user_admin(tg_username) do
     user = Repo.get_by(Bot42.UserRequests, tg_username: tg_username)
 
