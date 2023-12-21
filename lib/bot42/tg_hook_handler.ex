@@ -72,7 +72,8 @@ defmodule Bot42.TgHookHandler do
       Telegram.send_message(
         chat.id,
         "Only admins can use admin commands, or use in the admin chat.",
-        reply_to_message_id: message_id
+        reply_to_message_id: message_id,
+        parse_mode: "MarkdownV2"
       )
     end
   end
@@ -80,7 +81,7 @@ defmodule Bot42.TgHookHandler do
   @spec handle_update(Telegex.Type.Message.t()) :: :ok
   defp handle_update(%{text: "/help" <> _text, chat: chat, message_id: message_id}) do
     help_message =
-      "Welcome to the Bot Help Menu!\nHere are the commands you can use:\n\n/today - Get the list of events from the 42 Berlin school calendar for today. Stay updated with the latest happenings!\n\n@school42bot <text> - Ask any question to the ChatGPT. Just mention @school42bot followed by your question and get insights in no time. The mention will be replaced with 'ChatGPT' when processing your request.\n\nIf you have any questions or suggestions, feel free to reach out to me directly at @madvil2. I'm here to assist you!"
+      "Welcome to the Bot Help Menu!\nHere are the commands you can use:\n\n/today - Get the list of events from the 42 Berlin school calendar for today. Stay updated with the latest happenings!\n\n@school42bot <text> - Ask any question to the ChatGPT. Just mention @school42bot followed by your question and get insights in no time. The mention will be replaced with 'ChatGPT' when processing your request. Remember, you have a limit of 10 requests per day, so use them wisely!\n\nIf you have any questions or suggestions, feel free to reach out to me directly at @madvil2. I'm here to assist you!"
 
     Telegram.send_message(chat.id, help_message,
       parse_mode: "MarkdownV2",
@@ -97,6 +98,7 @@ defmodule Bot42.TgHookHandler do
          reply_to_message: reply_to_message
        }) do
     bot_username = "@school42bot"
+    IO.inspect(reply_to_message, label: "Reply to Message")
 
     is_mention_or_reply =
       (text != nil and String.contains?(text, bot_username)) or

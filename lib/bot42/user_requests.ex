@@ -89,6 +89,9 @@ defmodule Bot42.UserRequests do
       nil ->
         {:error, "User not found"}
 
+      %Bot42.UserRequests{is_admin: true} ->
+        {:ok, "User is already an admin"}
+
       %Bot42.UserRequests{} ->
         user
         |> change(%{is_admin: true})
@@ -104,6 +107,9 @@ defmodule Bot42.UserRequests do
     case user do
       nil ->
         {:error, "User not found"}
+
+      %Bot42.UserRequests{is_admin: false} ->
+        {:ok, "User is not an admin"}
 
       %Bot42.UserRequests{} ->
         user
