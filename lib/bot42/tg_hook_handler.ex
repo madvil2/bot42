@@ -98,7 +98,6 @@ defmodule Bot42.TgHookHandler do
          reply_to_message: reply_to_message
        }) do
     bot_username = "@school42bot"
-    IO.inspect(reply_to_message.from.username, label: "Reply to Message")
 
     is_mention_or_reply =
       (text != nil and String.contains?(text, bot_username)) or
