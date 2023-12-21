@@ -105,7 +105,7 @@ defmodule Bot42.TgHookHandler do
     if is_mention_or_reply do
       gpt_query = String.replace(text, bot_username, "ChatGPT")
 
-      case UserRequests.check_and_update_requests(from.id, from.username) do
+      case UserRequests.check_and_update_requests(from.username) do
         {:ok, remaining_requests} ->
           case ChatGpt.get_answer(gpt_query) do
             {:ok, answer} ->
