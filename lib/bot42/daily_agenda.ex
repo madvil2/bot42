@@ -104,7 +104,8 @@ defmodule Bot42.DailyAgenda do
           Enum.map_join(events, "\n\n", fn event ->
             start_time = Calendar.strftime(event.dtstart, "%H:%M")
             end_time = Calendar.strftime(event.dtend, "%H:%M")
-            date = Calendar.strftime(event.dtstart, "%Y-%m-%d")
+            adjusted_dtstart = NaiveDateTime.add(event.dtstart, -7200, :second)
+            date = Calendar.strftime(adjusted_dtstart, "%Y-%m-%d")
 
             "📌 *#{event.summary}*\n\n" <>
               "🗓️ *Date:* #{date}\n" <>
