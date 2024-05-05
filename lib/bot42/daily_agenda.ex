@@ -1,10 +1,39 @@
 defmodule Bot42.DailyAgenda do
   alias Bot42.Telegram
-  @spec daily_agenda_url :: String.t()
-  defp daily_agenda_url do
+
+  @spec daily_agenda_urls :: [String.t()]
+  defp daily_agenda_urls do
     :bot42
     |> Application.fetch_env!(:daily_agenda)
-    |> Keyword.fetch!(:url)
+    |> Keyword.fetch!(:urls)
+    # Convert from JSON string to a list
+    |> Jason.decode!()
+  end
+
+  @spec events_from_calendar :: {:ok, [map()] | []} | {:error, :external_api_error | term()}
+  defp events_from_calendar do
+    for url <- daily_agenda_urls() do
+      case HTTPoison.get(url) do
+        {:ok, %{status_code: 200, body: body}} -> parse_ical_data(body)
+        _ -> {:error, :external_api_error}
+      end
+    end
+    # Merge results into a single list
+    |> Enum.flat_map(& &1)
+    |> handle_potential_errors()
+  end
+
+  defp handle_potential_errors(results) do
+    case Enum.any?(results, fn result ->
+           case result do
+             {:error, _reason} -> true
+             # Catch-all for other results
+             _ -> false
+           end
+         end) do
+      true -> {:error, :external_api_error}
+      false -> {:ok, Enum.filter(results, fn result -> is_tuple(result) end)}
+    end
   end
 
   @spec formated_today_events :: {:ok, [map()] | []} | {:error, term()}
@@ -20,14 +49,6 @@ defmodule Bot42.DailyAgenda do
 
       {:error, _} = error ->
         error
-    end
-  end
-
-  @spec events_from_calendar :: {:ok, [map()] | []} | {:error, :external_api_error | term()}
-  defp events_from_calendar do
-    case HTTPoison.get(daily_agenda_url()) do
-      {:ok, %{status_code: 200, body: body}} -> parse_ical_data(body)
-      _ -> {:error, :external_api_error}
     end
   end
 

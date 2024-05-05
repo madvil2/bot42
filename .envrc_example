@@ -16,4 +16,4 @@
 # export TELEGRAM_ADMIN_CHAT_ID="tg_admin_chat_id"
 
 # # Daily Agenda
-# export DAILY_AGENDA_URL="daily_agenda_url"
+# export DAILY_AGENDA_URLS="daily_agenda_urls"
