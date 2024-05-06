@@ -4,7 +4,7 @@ defmodule Bot42.Telegram do
   @spec send_message(integer(), String.t(), keyword() | nil) :: :ok | {:error, term()}
   def send_message(chat_id, message, opts \\ []) do
     # Telegram's character limit for regular messages
-    max_length = 4096
+    max_length = 4090
 
     if String.length(message) > max_length do
       # Split the message into chunks
