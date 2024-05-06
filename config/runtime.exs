@@ -35,9 +35,9 @@ tg_admin_chat_id = "TELEGRAM_ADMIN_CHAT_ID" |> System.fetch_env!() |> String.to_
 
 config :bot42, :telegram, admin_chat_id: tg_admin_chat_id
 
-daily_agenda_url = System.fetch_env!("DAILY_AGENDA_URL")
+daily_agenda_urls = System.fetch_env!("DAILY_AGENDA_URS")
 
-config :bot42, :daily_agenda, url: daily_agenda_url
+config :bot42, :daily_agenda, urls: daily_agenda_urls
 
 if config_env() == :prod do
   database_url =
