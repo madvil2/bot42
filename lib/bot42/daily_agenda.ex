@@ -40,12 +40,12 @@ defmodule Bot42.DailyAgenda do
   def formated_today_events do
     case events_from_calendar() do
       {:ok, events} ->
-        formated_today_events =
+        formatted_today_events =
           events
           |> filter_today_events()
           |> format_events()
 
-        {:ok, formated_today_events}
+        {:ok, formatted_today_events}
 
       {:error, _} = error ->
         error
