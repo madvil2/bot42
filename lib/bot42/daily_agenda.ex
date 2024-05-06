@@ -1,71 +1,101 @@
 defmodule Bot42.DailyAgenda do
   alias Bot42.Telegram
-
   @spec daily_agenda_urls :: [String.t()]
   defp daily_agenda_urls do
-    :bot42
-    |> Application.fetch_env!(:daily_agenda)
-    |> Keyword.fetch!(:urls)
-    # Convert from JSON string to a list
-    |> Jason.decode!()
-  end
-
-  @spec events_from_calendar :: {:ok, [map()] | []} | {:error, :external_api_error | term()}
-  defp events_from_calendar do
-    for url <- daily_agenda_urls() do
-      case HTTPoison.get(url) do
-        {:ok, %{status_code: 200, body: body}} -> parse_ical_data(body)
-        _ -> {:error, :external_api_error}
-      end
-    end
-    # Merge results into a single list
-    |> Enum.flat_map(& &1)
-    |> handle_potential_errors()
-  end
-
-  defp handle_potential_errors(results) do
-    case Enum.any?(results, fn result ->
-           case result do
-             {:error, _reason} -> true
-             # Catch-all for other results
-             _ -> false
-           end
-         end) do
-      true -> {:error, :external_api_error}
-      false -> {:ok, Enum.filter(results, fn result -> is_tuple(result) end)}
-    end
+    [
+      Application.fetch_env!(:bot42, :calendar_urls)[:intra_url],
+      Application.fetch_env!(:bot42, :calendar_urls)[:fablab_url],
+      Application.fetch_env!(:bot42, :calendar_urls)[:mycustom_url]
+    ]
+    |> IO.inspect(label: "Fetched URLs")
   end
 
   @spec formated_today_events :: {:ok, [map()] | []} | {:error, term()}
   def formated_today_events do
     case events_from_calendar() do
       {:ok, events} ->
-        formatted_today_events =
+        formated_today_events =
           events
           |> filter_today_events()
           |> format_events()
 
-        {:ok, formatted_today_events}
+        {:ok, formated_today_events}
+
+      # |> IO.inspect(label: "Formatted Events")
 
       {:error, _} = error ->
         error
+        # |> IO.inspect(label: "Error in Events Fetching")
+    end
+  end
+
+  @spec events_from_calendar :: {:ok, [map()] | []} | {:error, :external_api_error | term()}
+  defp events_from_calendar do
+    urls = daily_agenda_urls()
+
+    urls
+    |> Enum.map(fn url ->
+      case HTTPoison.get(url) do
+        {:ok, %{status_code: 200, body: body}} ->
+          parse_ical_data(body)
+
+        # |> IO.inspect(label: "Calendar Data from URL: #{url}")
+
+        {:error, reason} ->
+          {:error, {:external_api_error, reason}}
+          # |> IO.inspect(label: "Failed to Fetch URL: #{url}")
+      end
+    end)
+    |> merge_calendar_events()
+
+    # |> IO.inspect(label: "Merged Events")
+  end
+
+  @spec merge_calendar_events([{:ok, [map()]} | {:error, term()}]) ::
+          {:ok, [map()] | []} | {:error, :external_api_error}
+  defp merge_calendar_events(responses) do
+    case Enum.find(responses, fn response -> match?({:error, _}, response) end) do
+      nil ->
+        events = Enum.flat_map(responses, fn {:ok, events} -> events end)
+        {:ok, events}
+
+      _error ->
+        {:error, :external_api_error}
+        # |> IO.inspect(label: "Error during Event Merging")
     end
   end
 
   @spec parse_ical_data(String.t()) :: {:ok, [map()] | []} | {:error, :invalid_data}
   defp parse_ical_data(ical_data) do
     case ICalendar.from_ics(ical_data) do
-      events when is_list(events) -> {:ok, events}
-      _ -> {:error, :invalid_data}
+      events when is_list(events) ->
+        {:ok, events}
+
+      _ ->
+        {:error, :invalid_data}
+        # |> IO.inspect(label: "Failed to Parse iCal Data")
     end
   end
 
   @spec filter_today_events([map()] | []) :: [map()] | []
   defp filter_today_events(events) do
     today = Date.utc_today()
-    # today = ~D[2023-09-27]
+    # For specific debugging with a set date, uncomment the next line:
+    # today = ~D[2024-05-09]
 
-    Enum.filter(events, fn event -> DateTime.to_date(event.dtstart) == today end)
+    IO.inspect(today, label: "Current Date for Filtering")
+    IO.inspect(events, label: "Events Before Filtering")
+
+    filtered_events =
+      Enum.filter(events, fn event ->
+        # Assuming `event.dtstart` is a DateTime struct:
+        event_date = DateTime.to_date(event.dtstart)
+        event_date == today
+      end)
+
+    IO.inspect(filtered_events, label: "Events After Filtering")
+
+    filtered_events
   end
 
   @spec next_three_events([map()] | []) :: [map()] | []
@@ -104,8 +134,7 @@ defmodule Bot42.DailyAgenda do
           Enum.map_join(events, "\n\n", fn event ->
             start_time = Calendar.strftime(event.dtstart, "%H:%M")
             end_time = Calendar.strftime(event.dtend, "%H:%M")
-            adjusted_dtstart = NaiveDateTime.add(event.dtstart, -7200, :second)
-            date = Calendar.strftime(adjusted_dtstart, "%Y-%m-%d")
+            date = Calendar.strftime(event.dtstart, "%Y-%m-%d")
 
             "📌 *#{event.summary}*\n\n" <>
               "🗓️ *Date:* #{date}\n" <>
@@ -125,9 +154,7 @@ defmodule Bot42.DailyAgenda do
         Enum.map_join(events, "\n\n", fn event ->
           start_time = Calendar.strftime(event.dtstart, "%H:%M")
           end_time = Calendar.strftime(event.dtend, "%H:%M")
-          # Subtract 2 hours (7200 seconds)
-          adjusted_dtstart = NaiveDateTime.add(event.dtstart, -7200, :second)
-          date = Calendar.strftime(adjusted_dtstart, "%Y-%m-%d")
+          date = Calendar.strftime(event.dtstart, "%Y-%m-%d")
 
           "📌 *#{event.summary}*\n\n" <>
             "🗓️ *Date:* #{date}\n" <>
@@ -144,7 +171,7 @@ defmodule Bot42.DailyAgenda do
           "Guten Morgen, 42 coders! 🌅\nThe sun is up, and that means it's time to check out today's events.\n\n"
 
         full_text = greet <> text
-
+        # -4_040_331_382
         Telegram.send_message(-1_002_067_092_609, full_text,
           parse_mode: "MarkdownV2",
           disable_web_page_preview: true

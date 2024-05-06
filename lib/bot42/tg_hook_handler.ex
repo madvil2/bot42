@@ -141,7 +141,7 @@ defmodule Bot42.TgHookHandler do
     IO.inspect(update, label: "Unknown update")
   end
 
-  defp handle_admin_command(command_text, chat, from, message_id) do
+  defp handle_admin_command(command_text, chat, _from, message_id) do
     [action, tg_username] = String.split(command_text)
     tg_username = String.replace(tg_username, ~r/^@/, "")
 

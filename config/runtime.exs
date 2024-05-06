@@ -20,6 +20,7 @@ if System.get_env("PHX_SERVER") do
   config :bot42, Bot42Web.Endpoint, server: true
 end
 
+# Telegram configuration ...
 tg_webhook_url = System.fetch_env!("TG_WEBHOOK_URL")
 tg_webhook_server_port = System.fetch_env!("TG_WEBHOOK_SERVER_PORT")
 
@@ -27,17 +28,19 @@ config :bot42, Bot42.TgHookHandler,
   webhook_url: tg_webhook_url,
   server_port: String.to_integer(tg_webhook_server_port)
 
+# ChatGPT and other configurations ...
 chat_gpt_api_key = System.fetch_env!("CHAT_GPT_API_KEY")
-
 config :bot42, :chat_gpt, api_key: chat_gpt_api_key
 
-tg_admin_chat_id = "TELEGRAM_ADMIN_CHAT_ID" |> System.fetch_env!() |> String.to_integer()
+# Calendar URLs
+calendar_intra_url = System.fetch_env!("CALENDAR_INTRA_URL")
+calendar_fablab_url = System.fetch_env!("CALENDAR_FABLAB_URL")
+calendar_mycustom_url = System.fetch_env!("CALENDAR_MYCUSTOM_URL")
 
-config :bot42, :telegram, admin_chat_id: tg_admin_chat_id
-
-daily_agenda_urls = System.fetch_env!("DAILY_AGENDA_URLS")
-
-config :bot42, :daily_agenda, urls: daily_agenda_urls
+config :bot42, :calendar_urls,
+  intra_url: calendar_intra_url,
+  fablab_url: calendar_fablab_url,
+  mycustom_url: calendar_mycustom_url
 
 if config_env() == :prod do
   database_url =
