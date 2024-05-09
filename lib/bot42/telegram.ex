@@ -1,4 +1,5 @@
 defmodule Bot42.Telegram do
+  @placeholder_bold "BOLDPLACEHOLDER"
   require Logger
 
   @spec send_message(integer(), String.t(), keyword() | nil) :: :ok | {:error, term()}
@@ -42,6 +43,7 @@ defmodule Bot42.Telegram do
     |> String.replace("<", "\\<")
     |> String.replace("_", "\\_")
     |> String.replace("*", "\\*")
+    |> String.replace(@placeholder_bold, "*")
   end
 
   defp log_and_notify_error(error, update) do

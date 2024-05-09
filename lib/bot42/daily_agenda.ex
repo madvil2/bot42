@@ -1,4 +1,5 @@
 defmodule Bot42.DailyAgenda do
+  @placeholder_bold "BOLDPLACEHOLDER"
   alias Bot42.Telegram
   @spec daily_agenda_urls :: [String.t()]
   defp daily_agenda_urls do
@@ -7,7 +8,8 @@ defmodule Bot42.DailyAgenda do
       Application.fetch_env!(:bot42, :calendar_urls)[:fablab_url],
       Application.fetch_env!(:bot42, :calendar_urls)[:mycustom_url]
     ]
-    |> IO.inspect(label: "Fetched URLs")
+
+    # |> IO.inspect(label: "Fetched URLs")
   end
 
   @spec formated_today_events :: {:ok, [map()] | []} | {:error, term()}
@@ -83,8 +85,8 @@ defmodule Bot42.DailyAgenda do
     # For specific debugging with a set date, uncomment the next line:
     # today = ~D[2024-05-09]
 
-    IO.inspect(today, label: "Current Date for Filtering")
-    IO.inspect(events, label: "Events Before Filtering")
+    # IO.inspect(today, label: "Current Date for Filtering")
+    # IO.inspect(events, label: "Events Before Filtering")
 
     filtered_events =
       Enum.filter(events, fn event ->
@@ -93,7 +95,7 @@ defmodule Bot42.DailyAgenda do
         event_date == today
       end)
 
-    IO.inspect(filtered_events, label: "Events After Filtering")
+    # IO.inspect(filtered_events, label: "Events After Filtering")
 
     filtered_events
   end
@@ -125,21 +127,24 @@ defmodule Bot42.DailyAgenda do
 
         events_text = if Enum.empty?(next_events), do: "", else: format_next_events(next_events)
 
-        "📆 *Today's Events*\n\n" <>
+        "📆 #{@placeholder_bold}Today's Events#{@placeholder_bold}\n\n" <>
           "Unfortunately, there are no events scheduled for today 😔\n\n" <>
           events_text
 
       events ->
-        "📆 *Today's Events*\n\n" <>
+        "📆 #{@placeholder_bold}Today's Events#{@placeholder_bold}\n\n" <>
           Enum.map_join(events, "\n\n", fn event ->
             start_time = Calendar.strftime(event.dtstart, "%H:%M")
             end_time = Calendar.strftime(event.dtend, "%H:%M")
             date = Calendar.strftime(event.dtstart, "%Y-%m-%d")
 
-            "📌 *#{event.summary}*\n\n" <>
-              "🗓️ *Date:* #{date}\n" <>
-              "🕒 *Time:* #{start_time} - #{end_time}\n" <>
-              if(event.location != nil, do: "📍 *Location:* #{event.location}\n", else: "")
+            "📌 #{@placeholder_bold}#{event.summary}#{@placeholder_bold}\n\n" <>
+              "🗓️ #{@placeholder_bold}Date:#{@placeholder_bold} #{date}\n" <>
+              "🕒 #{@placeholder_bold}Time:#{@placeholder_bold} #{start_time} - #{end_time}\n" <>
+              if(event.location != nil,
+                do: "📍 #{@placeholder_bold}Location:#{@placeholder_bold} #{event.location}\n",
+                else: ""
+              )
           end)
     end
   end
@@ -147,19 +152,22 @@ defmodule Bot42.DailyAgenda do
   @spec format_next_events([%ICalendar.Event{}] | []) :: String.t()
   defp format_next_events(events) do
     if Enum.empty?(events) do
-      "📆 *Today's Events*\n\n" <>
+      "📆 #{@placeholder_bold}Today's Events#{@placeholder_bold}\n\n" <>
         "Unfortunately, there are no events scheduled for today 😔\n\n"
     else
-      "🔜 *However, here are the next 3 events:*\n\n" <>
+      "🔜 #{@placeholder_bold}However, here are the next 3 events:#{@placeholder_bold}\n\n" <>
         Enum.map_join(events, "\n\n", fn event ->
           start_time = Calendar.strftime(event.dtstart, "%H:%M")
           end_time = Calendar.strftime(event.dtend, "%H:%M")
           date = Calendar.strftime(event.dtstart, "%Y-%m-%d")
 
-          "📌 *#{event.summary}*\n\n" <>
-            "🗓️ *Date:* #{date}\n" <>
-            "🕒 *Time:* #{start_time} - #{end_time}\n" <>
-            if(event.location != nil, do: "📍 *Location:* #{event.location}\n", else: "")
+          "📌 #{@placeholder_bold}#{event.summary}#{@placeholder_bold}\n\n" <>
+            "🗓️ #{@placeholder_bold}Date:#{@placeholder_bold} #{date}\n" <>
+            "🕒 #{@placeholder_bold}Time:#{@placeholder_bold} #{start_time} - #{end_time}\n" <>
+            if(event.location != nil,
+              do: "📍 #{@placeholder_bold}Location:#{@placeholder_bold} #{event.location}\n",
+              else: ""
+            )
         end)
     end
   end
