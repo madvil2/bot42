@@ -59,7 +59,11 @@ defmodule Bot42.DailyAgenda do
     case Enum.find(responses, fn response -> match?({:error, _}, response) end) do
       nil ->
         events = Enum.flat_map(responses, fn {:ok, events} -> events end)
-        {:ok, events}
+
+        # Сортировка событий по времени начала
+        sorted_events = Enum.sort_by(events, fn event -> event.dtstart end)
+
+        {:ok, sorted_events}
 
       _error ->
         {:error, :external_api_error}
