@@ -103,7 +103,10 @@ defmodule Bot42.DailyAgenda do
     # Adjust this as needed
     end_date = Timex.shift(start_date, years: 1)
 
-    Enum.map(Timex.Recurrence.generate(start_date, rrule), fn date ->
+    rule = Rrule.from_string(rrule)
+    dates = Rrule.between(rule, start_date, end_date)
+
+    Enum.map(dates, fn date ->
       %ICalendar.Event{
         event
         | dtstart: Timex.to_datetime(date),
