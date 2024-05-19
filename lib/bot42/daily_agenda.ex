@@ -126,13 +126,16 @@ defmodule Bot42.DailyAgenda do
     end_date = Date.utc_today() |> Date.add(365)
 
     Enum.map(0..52, fn week ->
-      new_start = Date.add(start_date, week * 7)
-      new_end = Date.add(new_start, 0)
+      new_start_date = Date.add(start_date, week * 7)
+      new_end_date = Date.add(new_start_date, 0)
+
+      new_start = NaiveDateTime.new!(new_start_date, NaiveDateTime.to_time(event.dtstart))
+      new_end = NaiveDateTime.new!(new_end_date, NaiveDateTime.to_time(event.dtend))
 
       %{
         event
-        | dtstart: DateTime.from_naive!(~N[#{new_start} 00:00:00], "Etc/UTC"),
-          dtend: DateTime.from_naive!(~N[#{new_end} 00:00:00], "Etc/UTC")
+        | dtstart: DateTime.from_naive!(new_start, "Etc/UTC"),
+          dtend: DateTime.from_naive!(new_end, "Etc/UTC")
       }
     end)
   end
