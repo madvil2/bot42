@@ -11,7 +11,7 @@ defmodule Bot42.DailyAgenda do
     ]
   end
 
-  @spec formated_today_events() :: {:ok, [map()] | []} | {:error, term()}
+  @spec formated_today_events() :: {:ok, String.t()} | {:error, term()}
   def formated_today_events do
     case events_from_calendar() do
       {:ok, events} ->
@@ -104,7 +104,6 @@ defmodule Bot42.DailyAgenda do
   defp filter_today_events(events) do
     today = Date.utc_today()
     # today = ~D[2024-05-30]
-
     events
     |> filter_events_by_date(today)
     |> Enum.uniq_by(&{&1.summary, &1.dtstart, &1.dtend})
@@ -120,39 +119,14 @@ defmodule Bot42.DailyAgenda do
     |> Enum.uniq_by(&{&1.summary, &1.dtstart, &1.dtend})
   end
 
-  @spec next_three_events([map()] | []) :: [map()] | []
-  defp next_three_events(events) do
-    today = Date.utc_today()
-
-    events
-    |> Enum.filter(fn event ->
-      event.dtstart
-      |> DateTime.to_date()
-      |> Date.after?(today)
-    end)
-    |> Enum.sort_by(& &1.dtstart, DateTime)
-    |> Enum.take(3)
-    |> Enum.uniq_by(&{&1.summary, &1.dtstart, &1.dtend})
-  end
-
   @spec format_events([%ICalendar.Event{}] | [], Date.t()) :: String.t()
   defp format_events(events, date) do
     date_header = Calendar.strftime(date, "%d.%m.%Y")
 
     case events do
       [] ->
-        next_events =
-          events_from_calendar()
-          |> case do
-            {:ok, events} -> next_three_events(events)
-            _ -> []
-          end
-
-        events_text = if Enum.empty?(next_events), do: "", else: format_next_events(next_events)
-
         "📆 #{@placeholder_bold}#{date_header} Events#{@placeholder_bold}\n\n" <>
-          "Unfortunately, there are no events scheduled for #{date_header} 😔\n\n" <>
-          events_text
+          "Unfortunately, there are no events scheduled for this day 😔\n\n"
 
       events ->
         "📆 #{@placeholder_bold}#{date_header} Events#{@placeholder_bold}\n\n" <>
@@ -169,29 +143,6 @@ defmodule Bot42.DailyAgenda do
                 else: ""
               )
           end)
-    end
-  end
-
-  @spec format_next_events([%ICalendar.Event{}] | []) :: String.t()
-  defp format_next_events(events) do
-    if Enum.empty?(events) do
-      "📆 #{@placeholder_bold}Today's Events#{@placeholder_bold}\n\n" <>
-        "Unfortunately, there are no events scheduled for today 😔\n\n"
-    else
-      "🔜 #{@placeholder_bold}However, here are the next 3 events:#{@placeholder_bold}\n\n" <>
-        Enum.map_join(events, "\n\n", fn event ->
-          start_time = Calendar.strftime(event.dtstart, "%H:%M")
-          end_time = Calendar.strftime(event.dtend, "%H:%M")
-          date = Calendar.strftime(event.dtstart, "%Y-%m-%d")
-
-          "📌 #{@placeholder_bold}#{event.summary}#{@placeholder_bold}\n\n" <>
-            "🗓️ #{@placeholder_bold}Date:#{@placeholder_bold} #{date}\n" <>
-            "🕒 #{@placeholder_bold}Time:#{@placeholder_bold} #{start_time} - #{end_time}\n" <>
-            if(event.location != nil,
-              do: "📍 #{@placeholder_bold}Location:#{@placeholder_bold} #{event.location}\n",
-              else: ""
-            )
-        end)
     end
   end
 
