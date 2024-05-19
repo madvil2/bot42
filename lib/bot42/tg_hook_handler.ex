@@ -41,16 +41,17 @@ defmodule Bot42.TgHookHandler do
 
   @spec handle_update(Telegex.Type.Message.t()) :: :ok
   defp handle_update(%{new_chat_members: members, chat: chat}) when is_list(members) do
-    first_rule_message = "you already know the first rule"
+    welcome_message = "❗️Welcome to the club, "
+    first_rule_message = "you already know the first rule 🔫"
 
     Enum.each(members, fn member ->
       welcome_message =
         case member.username do
           nil ->
-            "Welcome to the club, #{member.first_name}, #{first_rule_message}"
+            "#{welcome_message}#{member.first_name}, #{first_rule_message}"
 
           username ->
-            "Welcome to the club, @#{username}, #{first_rule_message}"
+            "#{welcome_message}@#{username}, #{first_rule_message}"
         end
 
       Telegram.send_message(chat.id, welcome_message)
