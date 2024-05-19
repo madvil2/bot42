@@ -2,7 +2,7 @@ defmodule Bot42.DailyAgenda do
   @placeholder_bold "BOLDPLACEHOLDER"
   alias Bot42.Telegram
 
-  @spec daily_agenda_urls() :: [String.t()]
+  @spec daily_agenda_urls :: [String.t()]
   defp daily_agenda_urls do
     [
       Application.fetch_env!(:bot42, :calendar_urls)[:intra_url],
@@ -11,7 +11,7 @@ defmodule Bot42.DailyAgenda do
     ]
   end
 
-  @spec formated_today_events() :: {:ok, String.t()} | {:error, term()}
+  @spec formated_today_events :: {:ok, [map()] | []} | {:error, term()}
   def formated_today_events do
     case events_from_calendar() do
       {:ok, events} ->
@@ -80,57 +80,11 @@ defmodule Bot42.DailyAgenda do
   defp parse_ical_data(ical_data) do
     case ICalendar.from_ics(ical_data) do
       events when is_list(events) ->
-        expanded_events = Enum.flat_map(events, &expand_recurring_events/1)
-        {:ok, expanded_events}
+        {:ok, events}
 
       _ ->
         {:error, :invalid_data}
     end
-  end
-
-  @spec expand_recurring_events(ICalendar.Event.t()) :: [map()]
-  defp expand_recurring_events(event) do
-    case Map.get(event, :rrule) do
-      nil ->
-        [event]
-
-      rrule ->
-        expand_rrule(event, rrule)
-    end
-  end
-
-  @spec expand_rrule(ICalendar.Event.t(), map()) :: [map()]
-  defp expand_rrule(event, rrule) do
-    case parse_rrule(rrule) do
-      {:ok, %{freq: "WEEKLY"}} ->
-        generate_weekly_occurrences(event)
-
-      _ ->
-        [event]
-    end
-  end
-
-  @spec parse_rrule(map()) :: {:ok, map()} | :error
-  defp parse_rrule(%{freq: "WEEKLY"} = rrule), do: {:ok, rrule}
-  defp parse_rrule(_), do: :error
-
-  @spec generate_weekly_occurrences(ICalendar.Event.t()) :: [map()]
-  defp generate_weekly_occurrences(event) do
-    start_date = DateTime.to_date(event.dtstart)
-
-    Enum.map(0..52, fn week ->
-      new_start_date = Date.add(start_date, week * 7)
-      new_end_date = Date.add(new_start_date, 0)
-
-      new_start = NaiveDateTime.new!(new_start_date, NaiveDateTime.to_time(event.dtstart))
-      new_end = NaiveDateTime.new!(new_end_date, NaiveDateTime.to_time(event.dtend))
-
-      %{
-        event
-        | dtstart: DateTime.from_naive!(new_start, "Etc/UTC"),
-          dtend: DateTime.from_naive!(new_end, "Etc/UTC")
-      }
-    end)
   end
 
   @spec filter_today_events([map()] | []) :: [map()] | []
@@ -161,7 +115,7 @@ defmodule Bot42.DailyAgenda do
     |> Enum.take(3)
   end
 
-  @spec format_events([ICalendar.Event.t()] | []) :: String.t()
+  @spec format_events([%ICalendar.Event{}] | []) :: String.t()
   defp format_events(events) do
     case events do
       [] ->
@@ -194,30 +148,46 @@ defmodule Bot42.DailyAgenda do
               )
           end)
     end
-    |> String.replace(@placeholder_bold, "*")
   end
 
-  @spec format_next_events([ICalendar.Event.t()] | []) :: String.t()
+  @spec format_next_events([%ICalendar.Event{}] | []) :: String.t()
   defp format_next_events(events) do
     if Enum.empty?(events) do
       "📆 #{@placeholder_bold}Today's Events#{@placeholder_bold}\n\n" <>
         "Unfortunately, there are no events scheduled for today 😔\n\n"
     else
-      ("🔜 #{@placeholder_bold}However, here are the next 3 events:#{@placeholder_bold}\n\n" <>
-         Enum.map_join(events, "\n\n", fn event ->
-           start_time = Calendar.strftime(event.dtstart, "%H:%M")
-           end_time = Calendar.strftime(event.dtend, "%H:%M")
-           date = Calendar.strftime(event.dtstart, "%Y-%m-%d")
+      "🔜 #{@placeholder_bold}However, here are the next 3 events:#{@placeholder_bold}\n\n" <>
+        Enum.map_join(events, "\n\n", fn event ->
+          start_time = Calendar.strftime(event.dtstart, "%H:%M")
+          end_time = Calendar.strftime(event.dtend, "%H:%M")
+          date = Calendar.strftime(event.dtstart, "%Y-%m-%d")
 
-           "📌 #{@placeholder_bold}#{event.summary}#{@placeholder_bold}\n\n" <>
-             "🗓️ #{@placeholder_bold}Date:#{@placeholder_bold} #{date}\n" <>
-             "🕒 #{@placeholder_bold}Time:#{@placeholder_bold} #{start_time} - #{end_time}\n" <>
-             if(event.location != nil,
-               do: "📍 #{@placeholder_bold}Location:#{@placeholder_bold} #{event.location}\n",
-               else: ""
-             )
-         end))
-      |> String.replace(@placeholder_bold, "*")
+          "📌 #{@placeholder_bold}#{event.summary}#{@placeholder_bold}\n\n" <>
+            "🗓️ #{@placeholder_bold}Date:#{@placeholder_bold} #{date}\n" <>
+            "🕒 #{@placeholder_bold}Time:#{@placeholder_bold} #{start_time} - #{end_time}\n" <>
+            if(event.location != nil,
+              do: "📍 #{@placeholder_bold}Location:#{@placeholder_bold} #{event.location}\n",
+              else: ""
+            )
+        end)
+    end
+  end
+
+  def send_daily_events do
+    case formated_today_events() do
+      {:ok, text} ->
+        greet =
+          "Guten Morgen, 42 coders! 🌅\nThe sun is up, and that means it's time to check out today's events.\n\n"
+
+        full_text = greet <> text
+        # -4_040_331_382
+        Telegram.send_message(-1_002_067_092_609, full_text,
+          parse_mode: "MarkdownV2",
+          disable_web_page_preview: true
+        )
+
+      _ ->
+        :error
     end
   end
 end
