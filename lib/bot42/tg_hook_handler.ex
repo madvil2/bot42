@@ -6,7 +6,7 @@ defmodule Bot42.TgHookHandler do
   alias Bot42.DailyAgenda
   alias Bot42.UserRequests
 
-  @spec tg_admin_chat_id :: integer()
+  @spec tg_admin_chat_id() :: integer()
   defp tg_admin_chat_id do
     :bot42
     |> Application.fetch_env!(:telegram)
@@ -104,7 +104,12 @@ defmodule Bot42.TgHookHandler do
   @spec handle_update(Telegex.Type.Message.t()) :: :ok
   defp handle_update(%{text: "/help" <> _text, chat: chat, message_id: message_id}) do
     help_message =
-      "Welcome to the Bot Help Menu!\nHere are the commands you can use:\n\n/today - Get the list of events from the 42 Berlin school calendar for today. Stay updated with the latest happenings!\n\n@school42bot <text> - Ask any question to the ChatGPT. Just mention @school42bot followed by your question and get insights in no time. The mention will be replaced with 'ChatGPT' when processing your request. Remember, you have a limit of 10 requests per day, so use them wisely!\n\nIf you have any questions or suggestions, feel free to reach out to me directly at @madvil2. I'm here to assist you!"
+      "Welcome to the Bot Help Menu!\n" <>
+        "Here are the commands you can use:\n\n" <>
+        "/today - Get the list of events from the 42 Berlin school calendar for today. Stay updated with the latest happenings!\n" <>
+        "/events <date> - Get the list of events for a specific date. Use the format YYYY-MM-DD or DD.MM.YYYY.\n" <>
+        "@school42bot <text> - Ask any question to the ChatGPT. Just mention @school42bot followed by your question and get insights in no time. The mention will be replaced with 'ChatGPT' when processing your request. Remember, you have a limit of 10 requests per day, so use them wisely!\n\n" <>
+        "If you have any questions or suggestions, feel free to reach out to me directly at @madvil2. I'm here to assist you!"
 
     Telegram.send_message(chat.id, help_message,
       parse_mode: "MarkdownV2",
