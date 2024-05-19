@@ -34,7 +34,7 @@ defmodule Bot42.TgHookHandler do
 
   @impl true
   def on_update(%{message: message}) do
-    Logger.info("Got telegam update with message: #{inspect(message)}")
+    Logger.info("Got telegram update with message: #{inspect(message)}")
 
     handle_update(message)
   end
@@ -209,7 +209,20 @@ defmodule Bot42.TgHookHandler do
   defp parse_date(date_text) do
     case Date.from_iso8601(date_text) do
       {:ok, date} -> {:ok, date}
-      :error -> {:error, "Invalid date format"}
+      _ -> parse_date_dd_mm_yyyy(date_text)
+    end
+  end
+
+  defp parse_date_dd_mm_yyyy(date_text) do
+    case Regex.run(~r/^(\d{2})\.(\d{2})\.(\d{4})$/, date_text) do
+      [_, day, month, year] ->
+        case Date.new(String.to_integer(year), String.to_integer(month), String.to_integer(day)) do
+          {:ok, date} -> {:ok, date}
+          _ -> {:error, :invalid_format}
+        end
+
+      _ ->
+        {:error, :invalid_format}
     end
   end
 end
