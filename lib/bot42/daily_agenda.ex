@@ -1,8 +1,9 @@
 defmodule Bot42.DailyAgenda do
   @placeholder_bold "BOLDPLACEHOLDER"
   alias Bot42.Telegram
+  alias ICalendar.{Event, RRULE, Recur}
 
-  @spec daily_agenda_urls :: [String.t()]
+  @spec daily_agenda_urls() :: [String.t()]
   defp daily_agenda_urls do
     [
       Application.fetch_env!(:bot42, :calendar_urls)[:intra_url],
@@ -11,7 +12,7 @@ defmodule Bot42.DailyAgenda do
     ]
   end
 
-  @spec formated_today_events :: {:ok, [map()] | []} | {:error, term()}
+  @spec formated_today_events() :: {:ok, String.t()} | {:error, term()}
   def formated_today_events do
     case events_from_calendar() do
       {:ok, events} ->
@@ -80,10 +81,23 @@ defmodule Bot42.DailyAgenda do
   defp parse_ical_data(ical_data) do
     case ICalendar.from_ics(ical_data) do
       events when is_list(events) ->
-        {:ok, events}
+        expanded_events = Enum.flat_map(events, &expand_recurring_events/1)
+        {:ok, expanded_events}
 
       _ ->
         {:error, :invalid_data}
+    end
+  end
+
+  @spec expand_recurring_events(Event.t()) :: [map()]
+  defp expand_recurring_events(event) do
+    case event.rrule do
+      nil ->
+        [event]
+
+      %RRULE{} = rrule ->
+        Recur.expand_rrule(rrule, event.dtstart)
+        |> Enum.map(&Map.put(event, :dtstart, &1))
     end
   end
 
