@@ -202,7 +202,7 @@ defmodule Bot42.DailyAgenda do
         full_text = greet <> text
         # -4_040_331_382
         # -1_002_067_092_609
-        Telegram.send_message(-4_040_331_382, full_text,
+        Telegram.send_message(-1_002_067_092_609, full_text,
           parse_mode: "MarkdownV2",
           disable_web_page_preview: true
         )
