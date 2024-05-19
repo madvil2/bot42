@@ -93,29 +93,13 @@ defmodule Bot42.DailyAgenda do
 
   defp expand_recurrences(event) do
     case event.rrule do
-      nil -> [event]
-      rrule -> expand_rrule(event, rrule)
+      nil ->
+        [event]
+
+      _ ->
+        ICalendar.Recurrence.get_recurrences(event, Timex.shift(DateTime.utc_now(), years: 1))
+        |> Enum.to_list()
     end
-  end
-
-  defp expand_rrule(event, rrule) do
-    start_date = DateTime.to_date(event.dtstart)
-    # Adjust this as needed
-    end_date = Timex.shift(start_date, years: 1)
-
-    rule = Rrule.from_string(rrule)
-    dates = Rrule.between(rule, start_date, end_date)
-
-    Enum.map(dates, fn date ->
-      %ICalendar.Event{
-        event
-        | dtstart: Timex.to_datetime(date),
-          dtend:
-            Timex.to_datetime(
-              Timex.shift(date, hours: Timex.diff(event.dtend, event.dtstart, :hours))
-            )
-      }
-    end)
   end
 
   @spec filter_today_events([map()] | []) :: [map()] | []
