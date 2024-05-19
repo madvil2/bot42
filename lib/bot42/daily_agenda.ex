@@ -76,14 +76,24 @@ defmodule Bot42.DailyAgenda do
     end
   end
 
-  @spec parse_ical_data(String.t()) :: {:ok, [map()] | []} | {:error, :invalid_data}
   defp parse_ical_data(ical_data) do
     case ICalendar.from_ics(ical_data) do
-      events when is_list(events) ->
-        {:ok, events}
+      {:ok, %ICalendar{events: events}} when is_list(events) ->
+        expanded_events = Enum.flat_map(events, &expand_recurrences/1)
+        {:ok, expanded_events}
+
+      {:ok, _} ->
+        {:error, :invalid_data}
 
       _ ->
         {:error, :invalid_data}
+    end
+  end
+
+  defp expand_recurrences(event) do
+    case event.rrule do
+      nil -> [event]
+      rrule -> ICalendar.Util.Recurrence.expand(event, rrule)
     end
   end
 
