@@ -58,6 +58,8 @@ defmodule Bot42.MixProject do
       {:telegex, "~> 1.3.2"},
       {:httpoison, "~> 2.2.1"},
       {:icalendar, "~> 1.1.2"},
+      {:rrule, "~> 0.1.0"},
+      {:timex, "~> 3.7"},
       {:oban, "~> 2.17.1"}
     ]
   end
