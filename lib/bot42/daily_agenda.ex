@@ -1,6 +1,7 @@
 defmodule Bot42.DailyAgenda do
   @placeholder_bold "BOLDPLACEHOLDER"
   alias Bot42.Telegram
+
   @spec daily_agenda_urls :: [String.t()]
   defp daily_agenda_urls do
     [
@@ -8,30 +9,41 @@ defmodule Bot42.DailyAgenda do
       Application.fetch_env!(:bot42, :calendar_urls)[:fablab_url],
       Application.fetch_env!(:bot42, :calendar_urls)[:mycustom_url]
     ]
-
-    # |> IO.inspect(label: "Fetched URLs")
   end
 
   @spec formated_today_events :: {:ok, [map()] | []} | {:error, term()}
   def formated_today_events do
     case events_from_calendar() do
       {:ok, events} ->
-        formated_today_events =
+        formatted_today_events =
           events
           |> filter_today_events()
           |> format_events()
 
-        {:ok, formated_today_events}
-
-      # |> IO.inspect(label: "Formatted Events")
+        {:ok, formatted_today_events}
 
       {:error, _} = error ->
         error
-        # |> IO.inspect(label: "Error in Events Fetching")
     end
   end
 
-  @spec events_from_calendar :: {:ok, [map()] | []} | {:error, :external_api_error | term()}
+  @spec formated_date_events(Date.t()) :: {:ok, String.t()} | {:error, term()}
+  def formated_date_events(date) do
+    case events_from_calendar() do
+      {:ok, events} ->
+        formatted_date_events =
+          events
+          |> filter_events_by_date(date)
+          |> format_events()
+
+        {:ok, formatted_date_events}
+
+      {:error, _} = error ->
+        error
+    end
+  end
+
+  @spec events_from_calendar() :: {:ok, [map()] | []} | {:error, :external_api_error | term()}
   defp events_from_calendar do
     urls = daily_agenda_urls()
 
@@ -41,16 +53,11 @@ defmodule Bot42.DailyAgenda do
         {:ok, %{status_code: 200, body: body}} ->
           parse_ical_data(body)
 
-        # |> IO.inspect(label: "Calendar Data from URL: #{url}")
-
         {:error, reason} ->
           {:error, {:external_api_error, reason}}
-          # |> IO.inspect(label: "Failed to Fetch URL: #{url}")
       end
     end)
     |> merge_calendar_events()
-
-    # |> IO.inspect(label: "Merged Events")
   end
 
   @spec merge_calendar_events([{:ok, [map()]} | {:error, term()}]) ::
@@ -60,14 +67,12 @@ defmodule Bot42.DailyAgenda do
       nil ->
         events = Enum.flat_map(responses, fn {:ok, events} -> events end)
 
-        # Сортировка событий по времени начала
         sorted_events = Enum.sort_by(events, fn event -> event.dtstart end)
 
         {:ok, sorted_events}
 
       _error ->
         {:error, :external_api_error}
-        # |> IO.inspect(label: "Error during Event Merging")
     end
   end
 
@@ -79,29 +84,21 @@ defmodule Bot42.DailyAgenda do
 
       _ ->
         {:error, :invalid_data}
-        # |> IO.inspect(label: "Failed to Parse iCal Data")
     end
   end
 
   @spec filter_today_events([map()] | []) :: [map()] | []
   defp filter_today_events(events) do
     today = Date.utc_today()
-    # For specific debugging with a set date, uncomment the next line:
-    # today = ~D[2024-05-09]
+    filter_events_by_date(events, today)
+  end
 
-    # IO.inspect(today, label: "Current Date for Filtering")
-    # IO.inspect(events, label: "Events Before Filtering")
-
-    filtered_events =
-      Enum.filter(events, fn event ->
-        # Assuming `event.dtstart` is a DateTime struct:
-        event_date = DateTime.to_date(event.dtstart)
-        event_date == today
-      end)
-
-    # IO.inspect(filtered_events, label: "Events After Filtering")
-
-    filtered_events
+  @spec filter_events_by_date([map()] | [], Date.t()) :: [map()] | []
+  defp filter_events_by_date(events, date) do
+    Enum.filter(events, fn event ->
+      event_date = DateTime.to_date(event.dtstart)
+      event_date == date
+    end)
   end
 
   @spec next_three_events([map()] | []) :: [map()] | []

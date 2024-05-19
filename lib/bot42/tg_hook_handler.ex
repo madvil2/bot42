@@ -40,10 +40,18 @@ defmodule Bot42.TgHookHandler do
   end
 
   @spec handle_update(Telegex.Type.Message.t()) :: :ok
-  defp handle_update(%{new_chat_members: members, chat: chat})
-       when is_list(members) do
+  defp handle_update(%{new_chat_members: members, chat: chat}) when is_list(members) do
+    first_rule_message = "You already know the first rule."
+
     Enum.each(members, fn member ->
-      welcome_message = "Welcome @#{member.username}"
+      welcome_message =
+        case member.username do
+          nil ->
+            "Welcome to the club, #{member.first_name} #{member.last_name}. #{first_rule_message}"
+
+          username ->
+            "Welcome to the club, @#{username}. #{first_rule_message}"
+        end
 
       Telegram.send_message(chat.id, welcome_message)
     end)
@@ -51,6 +59,20 @@ defmodule Bot42.TgHookHandler do
 
   defp handle_update(%{text: "/today" <> _text, chat: chat, message_id: message_id}) do
     with {:ok, events_message} <- DailyAgenda.formated_today_events() do
+      :ok =
+        Telegram.send_message(chat.id, events_message,
+          parse_mode: "MarkdownV2",
+          disable_web_page_preview: true,
+          reply_to_message_id: message_id
+        )
+    end
+
+    :ok
+  end
+
+  defp handle_update(%{text: "/events " <> date_text, chat: chat, message_id: message_id}) do
+    with {:ok, date} <- parse_date(date_text),
+         {:ok, events_message} <- DailyAgenda.formated_date_events(date) do
       :ok =
         Telegram.send_message(chat.id, events_message,
           parse_mode: "MarkdownV2",
@@ -181,6 +203,13 @@ defmodule Bot42.TgHookHandler do
           parse_mode: "MarkdownV2",
           reply_to_message_id: message_id
         )
+    end
+  end
+
+  defp parse_date(date_text) do
+    case Date.from_iso8601(date_text) do
+      {:ok, date} -> {:ok, date}
+      :error -> {:error, "Invalid date format"}
     end
   end
 end
