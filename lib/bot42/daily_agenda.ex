@@ -1,7 +1,6 @@
 defmodule Bot42.DailyAgenda do
   @placeholder_bold "BOLDPLACEHOLDER"
   alias Bot42.Telegram
-  alias ICalendar.{Event, RRULE, Recur}
 
   @spec daily_agenda_urls() :: [String.t()]
   defp daily_agenda_urls do
@@ -89,16 +88,53 @@ defmodule Bot42.DailyAgenda do
     end
   end
 
-  @spec expand_recurring_events(Event.t()) :: [map()]
+  @spec expand_recurring_events(ICalendar.Event.t()) :: [map()]
   defp expand_recurring_events(event) do
-    case event.rrule do
+    case Map.get(event, :rrule) do
       nil ->
         [event]
 
-      %RRULE{} = rrule ->
-        Recur.expand_rrule(rrule, event.dtstart)
-        |> Enum.map(&Map.put(event, :dtstart, &1))
+      rrule ->
+        expand_rrule(event, rrule)
     end
+  end
+
+  @spec expand_rrule(ICalendar.Event.t(), String.t()) :: [map()]
+  defp expand_rrule(event, rrule) do
+    case parse_rrule(rrule) do
+      {:ok, %{freq: "WEEKLY"}} ->
+        generate_weekly_occurrences(event)
+
+      _ ->
+        [event]
+    end
+  end
+
+  @spec parse_rrule(String.t()) :: {:ok, map()} | :error
+  defp parse_rrule(rrule) do
+    # Simplified parser for "FREQ=WEEKLY;..."
+    case Regex.run(~r/FREQ=WEEKLY/, rrule) do
+      nil -> :error
+      _ -> {:ok, %{freq: "WEEKLY"}}
+    end
+  end
+
+  @spec generate_weekly_occurrences(ICalendar.Event.t()) :: [map()]
+  defp generate_weekly_occurrences(event) do
+    start_date = DateTime.to_date(event.dtstart)
+    # Generate occurrences for one year
+    end_date = Date.utc_today() |> Date.add(365)
+
+    Enum.map(0..52, fn week ->
+      new_start = Date.add(start_date, week * 7)
+      new_end = Date.add(new_start, 0)
+
+      %{
+        event
+        | dtstart: DateTime.from_naive!(~N[#{new_start} 00:00:00], "Etc/UTC"),
+          dtend: DateTime.from_naive!(~N[#{new_end} 00:00:00], "Etc/UTC")
+      }
+    end)
   end
 
   @spec filter_today_events([map()] | []) :: [map()] | []
@@ -129,7 +165,7 @@ defmodule Bot42.DailyAgenda do
     |> Enum.take(3)
   end
 
-  @spec format_events([%ICalendar.Event{}] | []) :: String.t()
+  @spec format_events([ICalendar.Event.t()] | []) :: String.t()
   defp format_events(events) do
     case events do
       [] ->
@@ -164,7 +200,7 @@ defmodule Bot42.DailyAgenda do
     end
   end
 
-  @spec format_next_events([%ICalendar.Event{}] | []) :: String.t()
+  @spec format_next_events([ICalendar.Event.t()] | []) :: String.t()
   defp format_next_events(events) do
     if Enum.empty?(events) do
       "📆 #{@placeholder_bold}Today's Events#{@placeholder_bold}\n\n" <>
