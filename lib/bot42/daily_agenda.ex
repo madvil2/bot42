@@ -99,7 +99,7 @@ defmodule Bot42.DailyAgenda do
     end
   end
 
-  @spec expand_rrule(ICalendar.Event.t(), String.t()) :: [map()]
+  @spec expand_rrule(ICalendar.Event.t(), map()) :: [map()]
   defp expand_rrule(event, rrule) do
     case parse_rrule(rrule) do
       {:ok, %{freq: "WEEKLY"}} ->
@@ -110,20 +110,13 @@ defmodule Bot42.DailyAgenda do
     end
   end
 
-  @spec parse_rrule(String.t()) :: {:ok, map()} | :error
-  defp parse_rrule(rrule) do
-    # Simplified parser for "FREQ=WEEKLY;..."
-    case Regex.run(~r/FREQ=WEEKLY/, rrule) do
-      nil -> :error
-      _ -> {:ok, %{freq: "WEEKLY"}}
-    end
-  end
+  @spec parse_rrule(map()) :: {:ok, map()} | :error
+  defp parse_rrule(%{freq: "WEEKLY"} = rrule), do: {:ok, rrule}
+  defp parse_rrule(_), do: :error
 
   @spec generate_weekly_occurrences(ICalendar.Event.t()) :: [map()]
   defp generate_weekly_occurrences(event) do
     start_date = DateTime.to_date(event.dtstart)
-    # Generate occurrences for one year
-    end_date = Date.utc_today() |> Date.add(365)
 
     Enum.map(0..52, fn week ->
       new_start_date = Date.add(start_date, week * 7)
