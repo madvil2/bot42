@@ -18,7 +18,7 @@ defmodule Bot42.DailyAgenda do
         formatted_today_events =
           events
           |> filter_today_events()
-          |> format_events()
+          |> format_events(Date.utc_today())
 
         {:ok, formatted_today_events}
 
@@ -34,7 +34,7 @@ defmodule Bot42.DailyAgenda do
         formatted_date_events =
           events
           |> filter_events_by_date(date)
-          |> format_events()
+          |> format_events(date)
 
         {:ok, formatted_date_events}
 
@@ -135,8 +135,10 @@ defmodule Bot42.DailyAgenda do
     |> Enum.uniq_by(&{&1.summary, &1.dtstart, &1.dtend})
   end
 
-  @spec format_events([%ICalendar.Event{}] | []) :: String.t()
-  defp format_events(events) do
+  @spec format_events([%ICalendar.Event{}] | [], Date.t()) :: String.t()
+  defp format_events(events, date) do
+    date_header = Calendar.strftime(date, "%d.%m.%Y")
+
     case events do
       [] ->
         next_events =
@@ -148,19 +150,19 @@ defmodule Bot42.DailyAgenda do
 
         events_text = if Enum.empty?(next_events), do: "", else: format_next_events(next_events)
 
-        "📆 #{@placeholder_bold}Today's Events#{@placeholder_bold}\n\n" <>
-          "Unfortunately, there are no events scheduled for today 😔\n\n" <>
+        "📆 #{@placeholder_bold}#{date_header} Events#{@placeholder_bold}\n\n" <>
+          "Unfortunately, there are no events scheduled for #{date_header} 😔\n\n" <>
           events_text
 
       events ->
-        "📆 #{@placeholder_bold}Today's Events#{@placeholder_bold}\n\n" <>
+        "📆 #{@placeholder_bold}#{date_header} Events#{@placeholder_bold}\n\n" <>
           Enum.map_join(events, "\n\n", fn event ->
             start_time = Calendar.strftime(event.dtstart, "%H:%M")
             end_time = Calendar.strftime(event.dtend, "%H:%M")
-            date = Calendar.strftime(event.dtstart, "%Y-%m-%d")
+            date_str = Calendar.strftime(event.dtstart, "%Y-%m-%d")
 
             "📌 #{@placeholder_bold}#{event.summary}#{@placeholder_bold}\n\n" <>
-              "🗓️ #{@placeholder_bold}Date:#{@placeholder_bold} #{date}\n" <>
+              "🗓️ #{@placeholder_bold}Date:#{@placeholder_bold} #{date_str}\n" <>
               "🕒 #{@placeholder_bold}Time:#{@placeholder_bold} #{start_time} - #{end_time}\n" <>
               if(event.location != nil,
                 do: "📍 #{@placeholder_bold}Location:#{@placeholder_bold} #{event.location}\n",
