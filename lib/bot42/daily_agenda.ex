@@ -194,6 +194,7 @@ defmodule Bot42.DailyAgenda do
               )
           end)
     end
+    |> String.replace(@placeholder_bold, "*")
   end
 
   @spec format_next_events([ICalendar.Event.t()] | []) :: String.t()
@@ -202,38 +203,21 @@ defmodule Bot42.DailyAgenda do
       "📆 #{@placeholder_bold}Today's Events#{@placeholder_bold}\n\n" <>
         "Unfortunately, there are no events scheduled for today 😔\n\n"
     else
-      "🔜 #{@placeholder_bold}However, here are the next 3 events:#{@placeholder_bold}\n\n" <>
-        Enum.map_join(events, "\n\n", fn event ->
-          start_time = Calendar.strftime(event.dtstart, "%H:%M")
-          end_time = Calendar.strftime(event.dtend, "%H:%M")
-          date = Calendar.strftime(event.dtstart, "%Y-%m-%d")
+      ("🔜 #{@placeholder_bold}However, here are the next 3 events:#{@placeholder_bold}\n\n" <>
+         Enum.map_join(events, "\n\n", fn event ->
+           start_time = Calendar.strftime(event.dtstart, "%H:%M")
+           end_time = Calendar.strftime(event.dtend, "%H:%M")
+           date = Calendar.strftime(event.dtstart, "%Y-%m-%d")
 
-          "📌 #{@placeholder_bold}#{event.summary}#{@placeholder_bold}\n\n" <>
-            "🗓️ #{@placeholder_bold}Date:#{@placeholder_bold} #{date}\n" <>
-            "🕒 #{@placeholder_bold}Time:#{@placeholder_bold} #{start_time} - #{end_time}\n" <>
-            if(event.location != nil,
-              do: "📍 #{@placeholder_bold}Location:#{@placeholder_bold} #{event.location}\n",
-              else: ""
-            )
-        end)
-    end
-  end
-
-  def send_daily_events do
-    case formated_today_events() do
-      {:ok, text} ->
-        greet =
-          "Guten Morgen, 42 coders! 🌅\nThe sun is up, and that means it's time to check out today's events.\n\n"
-
-        full_text = greet <> text
-        # -4_040_331_382
-        Telegram.send_message(-1_002_067_092_609, full_text,
-          parse_mode: "MarkdownV2",
-          disable_web_page_preview: true
-        )
-
-      _ ->
-        :error
+           "📌 #{@placeholder_bold}#{event.summary}#{@placeholder_bold}\n\n" <>
+             "🗓️ #{@placeholder_bold}Date:#{@placeholder_bold} #{date}\n" <>
+             "🕒 #{@placeholder_bold}Time:#{@placeholder_bold} #{start_time} - #{end_time}\n" <>
+             if(event.location != nil,
+               do: "📍 #{@placeholder_bold}Location:#{@placeholder_bold} #{event.location}\n",
+               else: ""
+             )
+         end))
+      |> String.replace(@placeholder_bold, "*")
     end
   end
 end
