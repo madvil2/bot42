@@ -133,7 +133,6 @@ defmodule Bot42.DailyAgenda do
           Enum.map_join(events, "\n\n", fn event ->
             start_time = Calendar.strftime(event.dtstart, "%H:%M")
             end_time = Calendar.strftime(event.dtend, "%H:%M")
-            date_str = Calendar.strftime(event.dtstart, "%Y-%m-%d")
 
             "📌 #{@placeholder_bold}#{event.summary}#{@placeholder_bold}\n\n" <>
               "🕒 #{@placeholder_bold}Time:#{@placeholder_bold} #{start_time} - #{end_time}\n" <>
