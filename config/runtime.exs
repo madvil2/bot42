@@ -25,11 +25,10 @@ tg_webhook_url = System.fetch_env!("TG_WEBHOOK_URL")
 tg_webhook_server_port = System.fetch_env!("TG_WEBHOOK_SERVER_PORT")
 telegram_admin_chat_id = System.fetch_env!("TELEGRAM_ADMIN_CHAT_ID")
 
-config :bot42, Bot42.TgHookHandler,
+config :bot42, :telegram,
   webhook_url: tg_webhook_url,
-  server_port: String.to_integer(tg_webhook_server_port)
-
-config :bot42, :telegram, admin_chat_id: String.to_integer(telegram_admin_chat_id)
+  server_port: String.to_integer(tg_webhook_server_port),
+  admin_chat_id: String.to_integer(telegram_admin_chat_id)
 
 # ChatGPT and other configurations ...
 chat_gpt_api_key = System.fetch_env!("CHAT_GPT_API_KEY")
