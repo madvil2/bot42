@@ -9,7 +9,7 @@ defmodule Bot42.TgHookHandler do
   @spec tg_admin_chat_id() :: integer()
   defp tg_admin_chat_id do
     :bot42
-    |> Application.fetch_env!(:telegram)
+    |> Application.fetch_env!(:bot42)
     |> Keyword.fetch!(:admin_chat_id)
   end
 
