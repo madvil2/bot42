@@ -119,9 +119,14 @@ defmodule Bot42.DailyAgenda do
     |> Enum.uniq_by(&{&1.summary, &1.dtstart, &1.dtend})
   end
 
+  defp convert_to_timezone(datetime, timezone) do
+    Timex.Timezone.convert(datetime, timezone)
+  end
+
   @spec format_events([%ICalendar.Event{}] | [], Date.t()) :: String.t()
   defp format_events(events, date) do
     date_header = Calendar.strftime(date, "%d.%m.%Y")
+    timezone = "Europe/Berlin"
 
     case events do
       [] ->
@@ -131,8 +136,10 @@ defmodule Bot42.DailyAgenda do
       events ->
         "📆 #{@placeholder_bold}#{date_header} Events#{@placeholder_bold}\n\n" <>
           Enum.map_join(events, "\n\n", fn event ->
-            start_time = Calendar.strftime(event.dtstart, "%H:%M")
-            end_time = Calendar.strftime(event.dtend, "%H:%M")
+            start_time =
+              event.dtstart |> convert_to_timezone(timezone) |> Calendar.strftime("%H:%M")
+
+            end_time = event.dtend |> convert_to_timezone(timezone) |> Calendar.strftime("%H:%M")
 
             "📌 #{@placeholder_bold}#{event.summary}#{@placeholder_bold}\n\n" <>
               "🕒 #{@placeholder_bold}Time:#{@placeholder_bold} #{start_time} - #{end_time}\n" <>
